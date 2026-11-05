@@ -326,6 +326,11 @@ static void execLine(const std::string& line) {
       printf("subdiff f%d %d\n", (int)s.frameCount(), d);
     }
     last.assign(pp.frame, pp.frame + n);
+  } else if (cmd == "skiprender") {
+    // skiprender 0|1: no pixels drawn (as a launcher preview boots)
+    int v = 1;
+    ss >> v;
+    s.ppu.skipRender = v != 0;
   } else if (cmd == "objgroup") {
     // objgroup 0|1: high frame rate's sprite moves per character (1) or per sprite (0)
     int v = 1;

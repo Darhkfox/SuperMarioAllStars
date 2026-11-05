@@ -544,6 +544,9 @@ void App::readPlayer(int p, uint16_t* out, double dt) {
 #endif
     rewindHeld = cfg.rewind && !achLocked() && act[kActRewind] && !menu.open() && inGame;
     fastForward = cfg.fastForward && !achLocked() && act[kActFastForward] && !menu.open() && !rewindHeld && inGame;
+    // (pressed while achievements keep them off: say so, or they just seemed broken)
+    if (achLocked() && !menu.open() && inGame && (edge(kActRewind) || edge(kActFastForward)))
+      menu.notify("Fast forward and rewind are off while achievements are on (Options > Achievements)", 3.5f);
   }
   for (int a = 0; a < kActCount; a++) prevAction[p][a] = act[a];
 }

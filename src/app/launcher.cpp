@@ -155,12 +155,17 @@ void Launcher::runPreviews(int frames, bool sound, Audio& audio) {
     Preview& p = prev_[i];
     if (!p.snes && rom_) startPreview(i);
     if (!p.snes || p.ready) continue;
+    // (Booting out of sight, nothing drawn: the Steam Deck, at 60 Hz and a
+    // slower CPU, took half a minute to bring all the previews up, SMB3's,
+    // the last, still "loading" long after the others ran.)
+    p.snes->ppu.skipRender = true;
     while (!p.ready && clock::now() - start < std::chrono::microseconds(6000)) {
       stepPreview(p);
       p.bootFrames++;
       p.ready = i == kAllStars ? p.bootFrames > 30
                                : (!p.game->levelLoading() && p.game->current() == cardGame(i)) || p.bootFrames > 6000;
     }
+    p.snes->ppu.skipRender = !p.ready;
   }
   int want = sound && sel_ < N && prev_[cards_[sel_]].ready ? cards_[sel_] : -1;
   if (want != soundCard_) {
