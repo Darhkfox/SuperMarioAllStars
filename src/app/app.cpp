@@ -528,7 +528,7 @@ void App::readPlayer(int p, uint16_t* out, double dt) {
       if (edge(kActLoadState)) loadState(stateSlot);
       if (edge(kActScreenshot)) screenshot();
     }
-#ifdef _WIN32
+#ifndef __ANDROID__
     if (!menu.open()) {
       if (edge(kActFullscreen)) {
         cfg.displayMode = cfg.displayMode == DisplayMode::Windowed ? DisplayMode::Borderless : DisplayMode::Windowed;
@@ -1082,6 +1082,16 @@ std::shared_ptr<MenuPage> App::pageDisplay() {
                                           if (cfg.displayMode == DisplayMode::Windowed) applyDisplayMode();
                                         },
                                         "x", "Window height as a multiple of the original 224 lines."));
+#elif !defined(__ANDROID__)
+    pg.items.push_back(MenuItem::choice(
+        "Display Mode", {"Windowed", "Fullscreen"},
+        [this]() { return cfg.displayMode == DisplayMode::Windowed ? 0 : 1; },
+        [this](int v) {
+          cfg.displayMode = v == 0 ? DisplayMode::Windowed : DisplayMode::Borderless;
+          applyDisplayMode();
+          menu.refresh();
+        },
+        "F11 toggles windowed mode."));
 #endif
     pg.items.push_back(MenuItem::choice(
         "Aspect Ratio", {"4:3 (Original)", "16:10 Widescreen", "16:9 Widescreen", "21:9 Ultrawide", "Auto (Fill Display)"},
