@@ -1,9 +1,10 @@
-SUPER MARIO ALL-STARS - PC & ANDROID PORT
+SUPER MARIO ALL-STARS - PC, STEAM DECK & ANDROID PORT
 Version 1.0
 
-A native Windows and Android version of Super Mario All-Stars (SNES), with true
-widescreen, simultaneous two-player co-op, a launcher, save states, rewind,
-achievements, cheats, level select, a sound test and a music player.
+A native Windows, Linux (Steam Deck) and Android version of Super Mario
+All-Stars (SNES), with true widescreen, simultaneous two-player co-op, a
+launcher, save states, rewind, achievements, cheats, level select, a sound test
+and a music player.
 
 The four games: Super Mario Bros., Super Mario Bros.: The Lost Levels,
 Super Mario Bros. 2 and Super Mario Bros. 3.
@@ -70,6 +71,30 @@ Requirements: Android 6.0 or later, 64-bit phone or tablet.
 Saves, states and settings are kept in the app's own storage. Screenshots go to
 Android/data/com.darhkfox.allstars/files/screenshots. Leaving the app saves your
 game progress.
+
+
+=====================================================================
+ STEAM DECK / LINUX
+=====================================================================
+
+Requirements: a 64-bit Linux PC or Steam Deck with OpenGL ES 3 graphics
+drivers (any recent Mesa or NVIDIA driver; SteamOS has them).
+
+1. Download SuperMarioAllStars-Linux-x86_64.AppImage and make it executable
+   (Properties > Permissions > "Is executable", or chmod +x in a terminal).
+2. Run it. On first launch, click the "ROM not found" card and pick your
+   "Super Mario All-Stars (USA).sfc" in the file dialog; it is copied in, so
+   you only do this once. (Or drop the file on the window, or put it in a
+   "roms" folder beside the AppImage.)
+
+Steam Deck: do step 1 and 2 in Desktop Mode, then add the AppImage to Steam
+(Add a Non-Steam Game) to play it in Gaming Mode. The Deck's controls work as
+a controller; the touch screen works too.
+
+F11 or Alt+Enter switches between windowed and fullscreen. Saves, states and
+settings are kept in ~/.local/share/SuperMarioAllStars. On Linux the slang
+shader presets and High Frame Rate aren't available (the built-in CRT filters
+are).
 
 
 =====================================================================
@@ -257,7 +282,8 @@ Super Mario All-Stars PC Port
   Patreon   patreon.com/c/TeamRedTail
 
 Third-party components:
-  SDL2 (Android build) - Sam Lantinga and contributors, zlib licence.
+  SDL2 (Android and Linux builds) - Sam Lantinga and contributors, zlib licence.
+  DejaVu Sans font (Linux build) - DejaVu fonts team, Bitstream Vera licence.
   Luckiest Guy font - Astigmatic, Apache License 2.0.
   librashader (Windows slang shaders) - Mozilla Public License 2.0
     (librashader-LICENSE.md; source: github.com/SnowflakePowered/librashader).
