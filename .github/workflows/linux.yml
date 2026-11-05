@@ -72,8 +72,9 @@ jobs:
         run: |
           set -x
           if gh release view linux-beta --json tagName > /dev/null; then
-            git tag -f linux-beta "$GITHUB_SHA"
-            git push -f origin linux-beta
+            # (the AppImage and the notes replaced; the tag stays where the beta
+            # began: the build's token may not move it to a commit that changes
+            # this workflow)
             gh release edit linux-beta --prerelease --latest=false \
               --title "Super Mario All-Stars Linux / Steam Deck Beta" --notes-file packaging/linux/beta-notes.md
             gh release upload linux-beta SuperMarioAllStars-Linux-x86_64.AppImage --clobber
