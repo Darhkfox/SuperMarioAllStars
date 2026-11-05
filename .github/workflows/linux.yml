@@ -8,6 +8,9 @@ on:
     branches: [linux]
   workflow_dispatch:
 
+permissions:
+  contents: write  # (the beta pre-release)
+
 jobs:
   appimage:
     runs-on: ubuntu-22.04
@@ -58,3 +61,16 @@ jobs:
         with:
           name: SuperMarioAllStars-Linux-x86_64
           path: SuperMarioAllStars-Linux-x86_64.AppImage
+
+      # The beta pre-release (tag linux-beta), replaced by each build of the
+      # linux branch: a plain download link for testers. Not marked Latest.
+      - name: Beta pre-release
+        if: github.ref == 'refs/heads/linux'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete linux-beta --cleanup-tag --yes || true
+          gh release create linux-beta SuperMarioAllStars-Linux-x86_64.AppImage \
+            --prerelease --latest=false --target "$GITHUB_SHA" \
+            --title "Super Mario All-Stars Linux / Steam Deck Beta" \
+            --notes-file packaging/linux/beta-notes.md
