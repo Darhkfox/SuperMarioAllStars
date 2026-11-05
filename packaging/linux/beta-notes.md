@@ -11,6 +11,7 @@
 ## Notes
 - **Fullscreen:** F11 or Alt+Enter switches between windowed and fullscreen.
 - **Where your files go:** saves, states and settings are kept in `~/.local/share/SuperMarioAllStars`.
+- **Crackling sound?** Raise Options → Audio → Latency, for example to 100 ms. Sound now goes through PulseAudio by default; setting `SDL_AUDIODRIVER` overrides that.
 - **Not in this version:** the slang shaders and High Frame Rate are Windows-only. The built-in CRT filters work.
 
 ## Found a problem?

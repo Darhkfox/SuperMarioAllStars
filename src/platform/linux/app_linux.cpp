@@ -206,6 +206,10 @@ bool App::init() {
   SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "1");  // (the mouse taps the launcher and menus)
   SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "0");
   SDL_SetHint(SDL_HINT_APP_NAME, "Super Mario All-Stars");
+  // Sound through PulseAudio first (on PipeWire systems, the Steam Deck's,
+  // its PulseAudio side): a tester's crackling was far less that way than
+  // through SDL's PipeWire output. SDL_AUDIODRIVER still overrides it.
+  if (!getenv("SDL_AUDIODRIVER")) SDL_SetHint(SDL_HINT_AUDIODRIVER, "pulseaudio,pipewire,alsa");
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMECONTROLLER | SDL_INIT_EVENTS) != 0) {
     fprintf(stderr, "SDL_Init failed: %s\n", SDL_GetError());
     return false;
@@ -246,6 +250,9 @@ bool App::init() {
   }
   logf("video ok %dx%d", video.width(), video.height());
   if (!audio.init(cfg.audioLatency)) menu.notify("Audio device unavailable");
+  else
+    logf("audio: %s, %d Hz, %d-frame chunks, latency %d ms", SDL_GetCurrentAudioDriver(), audio.rate(),
+         audio.deviceFrames(), cfg.audioLatency);
   input.init();
   menu.setCanvas(video.canvas());
   menu.touchUi = true;
@@ -295,6 +302,7 @@ void App::run() {
   const double period = 1.0 / Snes::kFrameRate;
   float intervals[48] = {};
   int nIntervals = 0;
+  Uint64 statsAt = last;
   while (running) {
     SDL_Event e;
     while (SDL_PollEvent(&e)) {
@@ -403,6 +411,15 @@ void App::run() {
     frame(dt, frames);
     render();
     video.present();
+    // (sound running dry, for reports: logged every 10 s when it happened)
+    if (now - statsAt > freq * 10) {
+      statsAt = now;
+      int dry = 0, low = 0;
+      audio.takeStats(&dry, &low);
+      if (dry > 0)
+        logf("audio: ran dry %d times in 10 s (lowest queue %d ms; latency %d ms)", dry, low * 1000 / audio.rate(),
+             cfg.audioLatency);
+    }
   }
 }
 
