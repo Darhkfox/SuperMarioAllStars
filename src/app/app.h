@@ -1,7 +1,8 @@
 // Super Mario All-Stars port: the application (launcher, game, menus,
 // achievements), the same on every platform. The platform's part (window,
-// main loop, video, sound, controllers) is in app_win.cpp (Windows) and
-// platform/android/app_android.cpp (Android).
+// main loop, video, sound, controllers) is in app_win.cpp (Windows),
+// platform/android/app_android.cpp (Android), platform/linux/app_linux.cpp
+// (desktop Linux) and platform/macos/app_macos.mm (macOS).
 #pragma once
 #include <cstdint>
 #include <cstdio>
@@ -27,7 +28,11 @@
 #include "platform/android/audio_sdl.h"
 #include "platform/android/input_sdl.h"
 #include "platform/android/touch.h"
+#ifdef __APPLE__
+#include "platform/macos/video_metal.h"
+#else
 #include "platform/android/video_gles.h"
+#endif
 #endif
 
 extern const wchar_t* kAppTitle;

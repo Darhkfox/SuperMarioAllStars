@@ -69,6 +69,65 @@ add_custom_command(TARGET SuperMarioAllStars POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/third_party/slang-shaders $<TARGET_FILE_DIR:SuperMarioAllStars>/shaders
   COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/release/README.txt $<TARGET_FILE_DIR:SuperMarioAllStars>
   COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/third_party/librashader/LICENSE.md $<TARGET_FILE_DIR:SuperMarioAllStars>/librashader-LICENSE.md)
+elseif(APPLE)
+  # macOS: the same SDL sound / controller layer as Android and Linux, with
+  # its own entry (src/platform/macos) and Metal video (no OpenGL). Built as
+  # an app bundle; SDL2 from third_party/SDL2-*-src when it's there (as for
+  # Android: static, for a self-contained universal app), else an installed one.
+  enable_language(OBJCXX)
+  if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+  endif()
+  if(NOT CMAKE_OSX_DEPLOYMENT_TARGET)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET 11.0)
+  endif()
+  file(GLOB SDL_SRC_DIR LIST_DIRECTORIES true ${CMAKE_SOURCE_DIR}/third_party/SDL2-*-src)
+  if(SDL_SRC_DIR)
+    list(GET SDL_SRC_DIR 0 SDL_SRC_DIR)
+    set(SDL_SHARED OFF CACHE BOOL "" FORCE)
+    set(SDL_STATIC ON CACHE BOOL "" FORCE)
+    set(SDL_TEST OFF CACHE BOOL "" FORCE)
+    add_subdirectory(${SDL_SRC_DIR} ${CMAKE_BINARY_DIR}/SDL EXCLUDE_FROM_ALL)
+    set(SDL_LIB SDL2::SDL2-static)
+  else()
+    find_package(SDL2 REQUIRED)
+    set(SDL_LIB SDL2::SDL2)
+  endif()
+  target_compile_options(smascore PRIVATE -O2)
+  add_executable(smastool tools/smastool.cpp)
+  target_link_libraries(smastool smascore)
+  set(MAC_RESOURCES
+    ${CMAKE_SOURCE_DIR}/third_party/fonts/LuckiestGuy-Regular.ttf
+    ${CMAKE_SOURCE_DIR}/third_party/fonts/LICENSE.txt
+    ${CMAKE_SOURCE_DIR}/release/README.txt)
+  set_source_files_properties(${MAC_RESOURCES} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+  add_executable(SuperMarioAllStars MACOSX_BUNDLE
+    src/app/app.cpp
+    src/app/config.cpp
+    src/app/menu.cpp
+    src/app/launcher.cpp
+    src/app/music.cpp
+    src/app/achstore.cpp
+    src/app/utf8.cpp
+    src/app/sys_posix.cpp
+    src/platform/android/audio_sdl.cpp
+    src/platform/android/input_sdl.cpp
+    src/platform/android/touch.cpp
+    src/platform/macos/video_metal.mm
+    src/platform/macos/app_macos.mm
+    ${MAC_RESOURCES}
+  )
+  set_target_properties(SuperMarioAllStars PROPERTIES
+    MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/src/platform/macos/Info.plist.in
+    MACOSX_BUNDLE_BUNDLE_NAME "Super Mario All-Stars"
+    MACOSX_BUNDLE_GUI_IDENTIFIER "io.github.darhkfox.supermarioallstars"
+    XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC YES)
+  set_source_files_properties(src/platform/macos/video_metal.mm src/platform/macos/app_macos.mm
+    PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
+  target_compile_options(SuperMarioAllStars PRIVATE -O2 -Wno-unused-parameter -Wno-sign-compare)
+  target_link_libraries(SuperMarioAllStars smascore ${SDL_LIB}
+    "-framework Cocoa" "-framework Metal" "-framework QuartzCore" "-framework CoreText"
+    "-framework UniformTypeIdentifiers")
 elseif(UNIX AND NOT ANDROID)
   # Desktop Linux (the Steam Deck): the Android build's SDL / OpenGL ES 3 layer
   # with its own entry (src/platform/linux); FreeType draws the text. Packed
