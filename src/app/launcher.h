@@ -19,7 +19,7 @@ public:
   // The four games' cards (0-3), and Super Mario All-Stars itself (kAllStars:
   // its own title and game select, shown alone when chosen in Options).
   static constexpr int kCards = 4, kAllStars = 4, kButtons = 5;
-  enum Action { kNone, kPlay, kOptions, kAchievements, kMusic, kCredits, kQuit, kPatreon };
+  enum Action { kNone, kPlay, kOptions, kAchievements, kMusic, kCredits, kQuit, kPatreon, kUpdate };
 
   ~Launcher();
   // The ROM the previews run (null: not found, the cards say what is needed).
@@ -47,7 +47,9 @@ public:
   Action tap(float x, float y);
   bool overLink(float x, float y) const;  // (the logo and its page: a link)
   void setHint(const std::string& h) { hint_ = h; }  // the line along the bottom (empty: the keys')
-  void setConfirmRight(bool on) { confirmRight_ = on; }  // (the keys' line: the right face button plays)
+  void setConfirmRight(bool on) { confirmRight_ = on; }
+  void setUpdate(const std::string& tag) { updateTag_ = tag; }  // (a newer release: its badge, top right)
+  void setGains(int music, int sfx) { musicGain_ = music, sfxGain_ = sfx; }  // (the previews' music / sound effects, 256 = as made)  // (the keys' line: the right face button plays)
   ColorF accent() const;
   static ColorF gameAccent(GameId g);
   void stopSound() { soundCard_ = -1; }
@@ -75,7 +77,7 @@ private:
   int drawTurn_ = 0;  // (whose turn it is of the cards not chosen to draw a picture: see runPreviews)
   Preview prev_[kCards + 1];
   bool haveRom_ = false, exact_ = true;
-  std::string romName_, version_ = "1.1";
+  std::string romName_, version_ = "1.1.1";
   double par_ = 8.0 / 7.0;
   std::vector<int> cards_ = {0, 1, 2, 3};  // the cards shown
   const std::vector<uint8_t>* rom_ = nullptr;
@@ -88,8 +90,10 @@ private:
   int soundCard_ = -1;
   std::string hint_;
   bool confirmRight_ = false;
+  int musicGain_ = 256, sfxGain_ = 256;
   std::vector<RectF> cardHits_, buttonHits_;  // (where the last draw put them)
-  RectF linkHit_{};
+  RectF linkHit_{}, updateHit_{};
+  std::string updateTag_;
   std::vector<int16_t> buf_;
   void startPreview(int i);
   void stepPreview(Preview& p);

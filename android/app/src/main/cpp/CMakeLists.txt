@@ -46,6 +46,7 @@ add_library(main SHARED
   ${SRC}/app/imageload.cpp
   ${SRC}/app/msupack.cpp
   ${SRC}/app/achexport.cpp
+  ${SRC}/app/updatecheck.cpp
   ${SRC}/platform/android/app_android.cpp
   ${SRC}/platform/android/video_gles.cpp
   ${SRC}/platform/android/audio_sdl.cpp

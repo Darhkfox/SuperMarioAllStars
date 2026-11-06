@@ -97,11 +97,16 @@ struct Config {
   int volume = 80;
   bool muteUnfocused = false;
   int audioLatency = 64;       // ms
+  int musicVolume = 100;       // the games' music, percent (0: off, the sound effects kept)
+  int sfxVolume = 100;         // ... and their sound effects
   std::wstring msuPack;        // an MSU-1 music pack: its folder in the msu folder, or empty (see app/msupack.h)
   int msuVolume = 100;         // its music's volume, percent
   int interpolation = 0;       // 0 = hardware gaussian
   // Input
   int selectMode = 0;          // 0 = Select opens the menu, 1 = tap: game Select / hold: menu
+  bool checkUpdates = true;    // once a day, the launcher looks up the latest release on GitHub
+  std::string updateCheckedOn; // (the day it last did, "2026-11-06", and what it found, "v1.2")
+  std::string updateLatest;
   int menuStyle = 0;           // the menus' look: 0 Storybook, 1 Retro, 2 Themed Dark, 3 Classic (Menu::Style)
   bool confirmRight = false;   // menus: the right face button confirms, the bottom one backs out (Nintendo's way)
   int deadzone = 35;           // percent

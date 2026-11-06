@@ -531,6 +531,17 @@ static void execLine(const std::string& line) {
       printf(" %02X", s.apu.dsp.regs[i]);
     }
     printf("\n");
+  } else if (cmd == "aram") {
+    // aram ADDR LEN: the sound CPU's RAM (hex), 16 bytes a line
+    std::string a;
+    int n = 256;
+    ss >> a >> n;
+    const unsigned at = strtoul(a.c_str(), 0, 16);
+    for (int i = 0; i < n; i++) {
+      if (i % 16 == 0) printf("%sARAM %04X:", i ? "\n" : "", (at + i) & 0xffff);
+      printf(" %02X", s.apu.ram[(at + i) & 0xffff]);
+    }
+    printf("\n");
   } else if (cmd == "warp") {
     // warp GAME WORLD LEVEL [CHAR]  (GAME: 1=SMB1 2=LL 3=SMB2 4=SMB3; world/level 1-based; CHAR: SMB2's $008F)
     int gm = 1, w = 1, l = 1, ch = -1;
@@ -762,6 +773,12 @@ static void execLine(const std::string& line) {
     runFrames(frames);
     s.apu.traceFile = nullptr;
     fclose(f);
+  } else if (cmd == "gains") {
+    // gains MUSIC SFX: the music's and the sound effects' volumes, percent (Dsp::musicGain / sfxGain)
+    int m = 100, x = 100;
+    ss >> m >> x;
+    s.apu.dsp.musicGain = m * 256 / 100;
+    s.apu.dsp.sfxGain = x * 256 / 100;
   } else if (cmd == "rec") {
     g_audio.clear();
     g_recordAudio = true;

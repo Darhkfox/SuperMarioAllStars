@@ -17,7 +17,7 @@
 #include "core/png.h"
 
 const wchar_t* kAppTitle = L"Super Mario All-Stars";
-const char* kAppVersion = "1.1";
+const char* kAppVersion = "1.1.1";
 namespace {
 const char* kExpectedTitle = "SUPER MARIO ALL_STARS";
 constexpr uint32_t kKnownCrc = 0x925637c7;  // Super Mario All-Stars (USA)
@@ -130,7 +130,7 @@ void App::applyMsu(std::vector<uint8_t>& rom) {
         rom.swap(patched);
         snes->msu = std::make_unique<Msu1>();
         snes->msu->open(pk.base);
-        snes->msu->setGain(cfg.msuVolume / 100.0f);
+        snes->msu->setGain(cfg.msuVolume / 100.0f * cfg.musicVolume / 100.0f);
         msuBase = pk.base;
         msuStatus = "Playing " + narrow(cfg.msuPack) + ": " + std::to_string(pk.tracks) + " tracks, patched with " +
                     narrow(pathName(pk.patch)) + ".";
@@ -151,6 +151,61 @@ void App::reloadForMsu() {
   if (!snes || cfg.msuPack == msuLoaded) return;
   saveSram();
   if (loadRom()) romReady();
+}
+
+// Updates: once a day (or on Check Now) the latest release's tag is looked up
+// in the background; newer than this version, the launcher shows a badge
+// (and Options a "Get Version" button) that opens its page.
+void App::checkForUpdate(bool manual) {
+  if (test.on || test.runSeconds > 0) return;
+#ifdef _WIN32
+  if (at.on) {  // (the recording mode: no network, only what an earlier check found)
+    applyUpdateTag(cfg.checkUpdates ? cfg.updateLatest : std::string());
+    return;
+  }
+#endif
+  if (!manual && !cfg.checkUpdates) return;
+  const std::string today = timeText("%Y-%m-%d");
+  if (!manual && cfg.updateCheckedOn == today) {
+    applyUpdateTag(cfg.updateLatest);  // (checked today already)
+    return;
+  }
+  updateManual = manual;
+  updater.start();
+}
+
+void App::applyUpdateTag(const std::string& tag) {
+  const bool newer = !tag.empty() && UpdateCheck::isNewer(tag, kAppVersion);
+  updateTag = newer && (cfg.checkUpdates || updateManual) ? tag : std::string();
+  launcher.setUpdate(updateTag);
+  if (!updateTag.empty() && !updateTold) {
+    updateTold = true;
+    menu.notify("Version " + updateVersion() + " is available - select the badge, or Options > Get Version " +
+                    updateVersion(),
+                6.0f);
+  }
+}
+
+void App::updateTick() {
+  if (!updateStarted) {
+    updateStarted = true;
+    checkForUpdate(false);
+  }
+  std::string tag;
+  if (!updater.poll(&tag)) return;
+  const bool manual = updateManual;
+  if (!tag.empty()) {
+    cfg.updateCheckedOn = timeText("%Y-%m-%d");
+    cfg.updateLatest = tag;
+    if (!test.on && test.runSeconds <= 0) cfg.save(configPath);
+    if (manual) updateTold = false;
+    applyUpdateTag(tag);
+    if (manual && updateTag.empty()) menu.notify(std::string("You have the latest version (") + kAppVersion + ")", 4.0f);
+  } else if (manual) {
+    menu.notify("Couldn't reach GitHub to check for updates", 4.0f);
+  }
+  updateManual = false;
+  if (menu.open()) menu.refresh();
 }
 
 // After the ROM is loaded (at start, or found later while the launcher shows).
@@ -259,6 +314,12 @@ void App::frameLauncher(double dt, int gameFrames) {
         else menu.notify("ROM not found - see the game cards");
         break;
       case Launcher::kCredits: push(pageCredits()); break;
+      case Launcher::kUpdate:
+        if (!updateTag.empty()) {
+          openUrl(UpdateCheck::pageFor(updateTag).c_str());
+          menu.notify("Opened the version " + updateVersion() + " download page in your browser");
+        }
+        break;
       case Launcher::kPatreon:
         openUrl("https://www.patreon.com/TeamRedTail");
         menu.notify("Opened Patreon in your browser");
@@ -423,7 +484,13 @@ void App::applyConfig() {
   menu.style = cfg.menuStyle;
   launcher.setConfirmRight(cfg.confirmRight);
   if (snes) snes->ppu.noSpriteLimit = cfg.noSpriteLimit;
-  if (snes && snes->msu) snes->msu->setGain(cfg.msuVolume / 100.0f);
+  if (snes) {
+    snes->apu.dsp.musicGain = cfg.musicVolume * 256 / 100;
+    snes->apu.dsp.sfxGain = cfg.sfxVolume * 256 / 100;
+  }
+  launcher.setGains(cfg.musicVolume * 256 / 100, cfg.sfxVolume * 256 / 100);
+  // (a music pack's songs are music too: its own volume, times the music's)
+  if (snes && snes->msu) snes->msu->setGain(cfg.msuVolume / 100.0f * cfg.musicVolume / 100.0f);
   music.setMsuGain(cfg.msuVolume / 100.0f);
   if (game) {
     game->hudAnchor = cfg.hudAnchor;
@@ -918,6 +985,30 @@ std::shared_ptr<MenuPage> App::pageOptions() {
     }, "Where your covers and background go. After adding pictures, switch Game Covers (or Custom Background) "
        "off and on again to read them."));
 #endif
+    pg.items.push_back(MenuItem::header("Updates"));
+    pg.items.push_back(MenuItem::toggle(
+        "Check for Updates", [this]() { return cfg.checkUpdates ? 1 : 0; },
+        [this](int v) {
+          cfg.checkUpdates = v != 0;
+          applyUpdateTag(cfg.updateLatest);
+          if (cfg.checkUpdates) checkForUpdate(false);
+        },
+        std::string("Once a day the launcher looks up the latest release on GitHub (nothing about you or your game is "
+                    "sent) and shows a badge when there's a newer version than this one (") +
+            kAppVersion + ")."));
+    if (!updateTag.empty()) {
+      pg.items.push_back(MenuItem::action("Get Version " + updateVersion(), [this]() {
+        openUrl(UpdateCheck::pageFor(updateTag).c_str());
+        menu.notify("Opened the version " + updateVersion() + " download page in your browser");
+      }, "Opens its page on GitHub, where it can be downloaded. Your saves and settings carry over."));
+    } else {
+      pg.items.push_back(MenuItem::action(updater.running() ? "Checking..." : "Check Now", [this]() {
+        if (updater.running()) return;
+        checkForUpdate(true);
+        menu.notify("Checking for updates...", 2.0f);
+        menu.refresh();
+      }, std::string("Looks up the latest release on GitHub now. This is version ") + kAppVersion + "."));
+    }
     pg.items.push_back(MenuItem::header("Gameplay"));
     pg.items.push_back(MenuItem::toggle(
         "NES Brick Bounce", [this]() { return cfg.nesBrickBounce ? 1 : 0; },
@@ -1434,6 +1525,19 @@ std::shared_ptr<MenuPage> App::pageAudio() {
                                           applyConfig();
                                         },
                                         "%"));
+    pg.items.push_back(MenuItem::slider("Music Volume", 0, 100, 5, [this]() { return cfg.musicVolume; },
+                                        [this](int v) {
+                                          cfg.musicVolume = v;
+                                          applyConfig();
+                                        },
+                                        "%", "The games' music (and a music pack's). 0% turns the music off and keeps "
+                                             "the sound effects."));
+    pg.items.push_back(MenuItem::slider("Sound Effects Volume", 0, 100, 5, [this]() { return cfg.sfxVolume; },
+                                        [this](int v) {
+                                          cfg.sfxVolume = v;
+                                          applyConfig();
+                                        },
+                                        "%", "Jumps, coins, stomps and the rest. 0% turns them off and keeps the music."));
     pg.items.push_back(MenuItem::slider("Latency", 20, 160, 10, [this]() { return cfg.audioLatency; },
                                         [this](int v) {
                                           cfg.audioLatency = v;
@@ -1710,6 +1814,7 @@ void App::frame(double dt, int gameFrames) {
   dt = std::min(dt, 0.1);
   menu.tickToasts((float)dt);
   updateInput(dt);
+  updateTick();
   if (bindAction >= 0) updateBind(dt);
   if (inLauncher) {
     frameLauncher(dt, gameFrames);

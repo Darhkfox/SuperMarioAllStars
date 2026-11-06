@@ -116,6 +116,32 @@ bool takeRom(const std::wstring& data, const std::string& path) {
 }  // namespace
 
 void openUrl(const char* url) { SDL_OpenURL(url); }
+
+bool httpGet(const char* url, std::string& out) {
+  out.clear();
+  NSURL* u = [NSURL URLWithString:@(url)];
+  if (!u) return false;
+  NSMutableURLRequest* req = [NSMutableURLRequest requestWithURL:u
+                                                     cachePolicy:NSURLRequestReloadIgnoringLocalCacheData
+                                                 timeoutInterval:10];
+  [req setValue:@"application/vnd.github+json" forHTTPHeaderField:@"Accept"];
+  [req setValue:@"SuperMarioAllStars-port" forHTTPHeaderField:@"User-Agent"];
+  __block NSData* body = nil;
+  __block bool ok = false;
+  dispatch_semaphore_t done = dispatch_semaphore_create(0);
+  NSURLSessionDataTask* task = [[NSURLSession sharedSession]
+      dataTaskWithRequest:req
+        completionHandler:^(NSData* data, NSURLResponse* resp, NSError* err) {
+          ok = !err && [resp isKindOfClass:[NSHTTPURLResponse class]] && ((NSHTTPURLResponse*)resp).statusCode == 200;
+          body = data;
+          dispatch_semaphore_signal(done);
+        }];
+  [task resume];
+  dispatch_semaphore_wait(done, DISPATCH_TIME_FOREVER);
+  if (!ok || body.length == 0 || body.length > (1u << 20)) return false;
+  out.assign((const char*)body.bytes, body.length);
+  return true;
+}
 void openFolder(const std::wstring& path) {
   [[NSWorkspace sharedWorkspace] openURL:[NSURL fileURLWithPath:@(narrowUtf8(path).c_str()) isDirectory:YES]];
 }
