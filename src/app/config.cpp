@@ -266,6 +266,7 @@ bool Config::load(const std::wstring& path) {
   geti("audio.msu_volume", msuVolume, 0, 100);
   geti("input.select_button", selectMode, 0, 1);
   getb("input.menu_confirm_right", confirmRight);
+  geti("interface.menu_style", menuStyle, 0, 3);
   geti("input.deadzone", deadzone, 5, 90);
   geti("input.touch_mode", touchMode, 0, 2);
   geti("input.touch_opacity", touchOpacity, 10, 100);
@@ -336,6 +337,8 @@ bool Config::save(const std::wstring& path) const {
   f << "latency=" << audioLatency << "\n";
   f << "msu_pack=" << narrow(msuPack) << "\n";
   f << "msu_volume=" << msuVolume << "\n";
+  f << "[interface]\n";
+  f << "menu_style=" << menuStyle << "\n";
   f << "[input]\n";
   f << "select_button=" << selectMode << "\n";
   f << "menu_confirm_right=" << confirmRight << "\n";

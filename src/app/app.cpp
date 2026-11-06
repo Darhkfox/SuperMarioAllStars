@@ -420,6 +420,7 @@ void App::applyConfig() {
   audio.setVolume(cfg.volume / 100.0f);
   audio.setLatency(cfg.audioLatency);
   menu.confirmRight = cfg.confirmRight;
+  menu.style = cfg.menuStyle;
   launcher.setConfirmRight(cfg.confirmRight);
   if (snes) snes->ppu.noSpriteLimit = cfg.noSpriteLimit;
   if (snes && snes->msu) snes->msu->setGain(cfg.msuVolume / 100.0f);
@@ -853,6 +854,14 @@ std::shared_ptr<MenuPage> App::pageOptions() {
                                          "Volume, latency and custom soundtracks (MSU-1 music packs)."));
     pg.items.push_back(MenuItem::submenu("Controls", [this]() { menu.push(pageControls()); },
                                          "Keyboard and joypad bindings for both players."));
+    pg.items.push_back(MenuItem::choice(
+        "Menu Style", {"Storybook", "Retro", "Themed Dark", "Classic"}, [this]() { return cfg.menuStyle; },
+        [this](int v) {
+          cfg.menuStyle = v;
+          applyConfig();
+        },
+        "How these menus look: Storybook (bright and chunky), Retro (black, bricks and a pixel font), Themed Dark "
+        "(dark, under the game's own heading) or Classic (the original dark panel)."));
     pg.items.push_back(MenuItem::header("Launcher"));
     pg.items.push_back(MenuItem::choice(
         "Launcher Shows", {"Super Mario All-Stars", "The Four Games"}, [this]() { return cfg.launcherAllStars ? 0 : 1; },
@@ -1778,6 +1787,10 @@ void App::render() {
     video.clear();
     video.beginUi();
     menu.setAccent(launcher.accent());
+    {
+      const GameId g = Launcher::cardGame(launcher.card());
+      menu.setGameArt(g == GameId::SMB1 ? 1 : g == GameId::SMBLL ? 2 : g == GameId::SMB2 ? 3 : g == GameId::SMB3 ? 4 : 0);
+    }
     launcher.setPixelAspect(cfg.pixelAspectCrt ? 8.0 / 7.0 : 1.0);
     launcher.draw(menu, video.width(), video.height());
     if (menu.open()) menu.draw(video.width(), video.height(), menuAnim);
@@ -1835,7 +1848,14 @@ void App::render() {
   if (loading) vp.fade = 0;
   video.draw(vp);
   video.beginUi();
-  // The menu's accent: the running game's colour.
+  // The menu's accent: the running game's colour (and its heading's art).
+  switch (game->current()) {
+    case GameId::SMB1: menu.setGameArt(1); break;
+    case GameId::SMBLL: menu.setGameArt(2); break;
+    case GameId::SMB2: menu.setGameArt(3); break;
+    case GameId::SMB3: menu.setGameArt(4); break;
+    default: menu.setGameArt(0); break;
+  }
   switch (game->current()) {
     case GameId::SMB1: menu.setAccent(colorF(0.93f, 0.33f, 0.27f)); break;    // Mario red
     case GameId::SMBLL: menu.setAccent(colorF(0.36f, 0.76f, 0.40f)); break;   // Luigi green

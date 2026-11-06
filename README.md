@@ -194,6 +194,10 @@ What each page holds:
   colour temperature, colour-vision assist (protanopia / deuteranopia / tritanopia), and
   Mario's Colours / Luigi's Colours: alternate outfits for each brother (Super Mario Bros. and The
   Lost Levels), kept by each in co-op whichever is the game's player.
+* **Menu Style** — how the menus look: *Storybook* (the default: a cream card with a dark outline, Luckiest Guy
+  titles in the game's colour, a yellow star cursor), *Retro* (black with brick bars, a 5x7 pixel font drawn by the
+  port, ? block switches), *Themed Dark* (the dark panel under a heading in the game's pattern: bricks, the Lost
+  Levels' green bricks, SMB2's starry night, SMB3's checkers) or *Classic* (the original dark panel). `src/app/menu.cpp`.
 * **Audio** — volume, latency, mute when unfocused, and **Music Pack**: an MSU-1 custom soundtrack (see below).
 * **Gameplay** — **NES Brick Bounce**: in Super Mario Bros. and The Lost Levels, a brick broken from below sends Mario back down as on the NES instead of letting him keep rising (BMF54123's brick fix, updated by Blittle McNilsen, written into the console's ROM while on: `SmasGame::setNesBrickBounce`). Off by default.
 * **Credits** — where to find the author (YouTube, Reddit, GitHub; each opens in your browser).

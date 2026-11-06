@@ -223,6 +223,9 @@ shown centred, as they were designed as a single screen.
                  A card without a cover keeps its live preview. Covers also
                  make the launcher lighter on slow devices (no preview runs
                  for a card with a cover).
+  Menu Style     how these menus look: Storybook (bright and chunky, the
+                 default), Retro (black, bricks and a pixel font), Themed Dark
+                 (the dark panel under the game's own heading) or Classic.
   Controls       bindings for both players, Select Button, and Menu Buttons:
                  Right Confirms makes the pad's right face button choose in
                  the menus and the bottom one go back (Nintendo's layout).

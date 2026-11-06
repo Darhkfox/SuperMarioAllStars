@@ -92,6 +92,13 @@ public:
 
   // The colour of titles, the selection and switches (the running game's).
   void setAccent(ColorF c) { accent_ = c; }
+  // The menus' look: 0 Storybook (bright and chunky), 1 Retro (black, bricks,
+  // a pixel font), 2 Themed Dark (the classic panel with the game's heading),
+  // 3 Classic. And the game the heading shows (Themed Dark): 0 the
+  // collection, 1 Super Mario Bros., 2 The Lost Levels, 3 SMB2, 4 SMB3.
+  enum Style { kStorybook, kRetro, kThemedDark, kClassic, kStyleCount };
+  int style = kStorybook;
+  void setGameArt(int g) { gameArt_ = g; }
 
   // OSD notifications (visible whether or not the menu is open)
   void notify(const std::string& text, float seconds = 2.2f, bool hint = false);
@@ -120,6 +127,7 @@ public:
 
 private:
   Canvas* cv_ = nullptr;
+  int gameArt_ = 0;
   std::vector<std::shared_ptr<MenuPage>> stack_;
   float scale_ = 1.0f;
   float time_ = 0;  // for the selection's pulse
@@ -143,6 +151,15 @@ private:
   void drawToasts(int w, int h, float s);
   void drawBanner(int w, int h, float s);
   void drawStar(float cx, float cy, float r, ColorF fill, ColorF edge, float edgeW);
+  // (Retro: text in the 5x7 pixel font, upper case)
+  void pixelText(const std::wstring& s, RectF r, float size, ColorF c, TextAlign align, ParaAlign palign);
+  float pixelMeasure(const std::wstring& s, float size);
+  // A page title or heading in the style's display face (Luckiest Guy, outlined; or pixels).
+  void displayText(const std::wstring& s, RectF r, float size, ColorF fill, ColorF edge, float edgeW,
+                   TextAlign align = kAlignLeading);
+  float displayMeasure(const std::wstring& s, float size);
+  void drawHeaderArt(RectF r, float a);  // (Themed Dark: the game's pattern behind the title)
+  void drawBricks(RectF r, ColorF brick, ColorF mortar, float bh, float a);
   void activate(MenuItem& it);
   void adjust(MenuItem& it, int dir);
   bool selectable(const MenuItem& it) const;
