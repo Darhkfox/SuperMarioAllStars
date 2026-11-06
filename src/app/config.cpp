@@ -244,6 +244,7 @@ bool Config::load(const std::wstring& path) {
   geti("display.pillarbox", pillarbox, 0, 2);
   geti("display.widescreen_enemies", widescreenEnemies, 0, 1);
   getb("game.coop", coop);
+  getb("game.nes_brick_bounce", nesBrickBounce);
   geti("graphics.filter", filter, 0, kFilterCount - 1);
   geti("graphics.scanlines", scanlines, 0, 100);
   geti("graphics.crt_curve", crtCurve, 0, 100);
@@ -305,6 +306,7 @@ bool Config::save(const std::wstring& path) const {
   f << "widescreen_enemies=" << widescreenEnemies << "\n";
   f << "[game]\n";
   f << "coop=" << coop << "\n";
+  f << "nes_brick_bounce=" << nesBrickBounce << "\n";
   f << "[launcher]\n";
   f << "last_game=" << lastGame << "\n";
   f << "allstars_only=" << launcherAllStars << "\n";

@@ -425,6 +425,7 @@ void App::applyConfig() {
     game->hudAnchor = cfg.hudAnchor;
     game->dimWrap = cfg.dimWrap;
     game->enemyRange = cfg.widescreenEnemies != 0;
+    game->setNesBrickBounce(cfg.nesBrickBounce);
     game->coop = cfg.coop;
     game->setCheats(achLocked() ? 0 : cfg.cheats);  // (achievements on: no cheats)
     game->playerPalette = cfg.playerPalette;
@@ -903,6 +904,15 @@ std::shared_ptr<MenuPage> App::pageOptions() {
     }, "Where your covers and background go. After adding pictures, switch Game Covers (or Custom Background) "
        "off and on again to read them."));
 #endif
+    pg.items.push_back(MenuItem::header("Gameplay"));
+    pg.items.push_back(MenuItem::toggle(
+        "NES Brick Bounce", [this]() { return cfg.nesBrickBounce ? 1 : 0; },
+        [this](int v) {
+          cfg.nesBrickBounce = v != 0;
+          applyConfig();
+        },
+        "Super Mario Bros. and The Lost Levels: breaking a brick from below sends Mario back down, as on the NES. "
+        "Off: he keeps rising, as in the original All-Stars. (BMF54123's brick fix.)"));
     pg.items.push_back(MenuItem::header("Multiplayer"));
     pg.items.push_back(MenuItem::toggle(
         "Two-Player Co-op", [this]() { return cfg.coop ? 1 : 0; },

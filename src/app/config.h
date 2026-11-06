@@ -79,6 +79,7 @@ struct Config {
   int pillarbox = 1;           // 0 black, 1 blurred game, 2 dark frame
   int widescreenEnemies = 1;   // 1 = enemies active in full view
   bool coop = false;           // SMB1, LL, SMB3: two players at once, Luigi on controller 2
+  bool nesBrickBounce = false; // SMB1, LL: a brick broken from below sends Mario back down, as on the NES
   // Graphics
   int filter = kFilterSharp;
   int scanlines = 45;          // 0-100

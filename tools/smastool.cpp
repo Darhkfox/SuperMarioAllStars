@@ -336,6 +336,11 @@ static void execLine(const std::string& line) {
       s.msu = std::make_unique<Msu1>();
       s.msu->open(std::wstring(b.begin(), b.end()));
     }
+  } else if (cmd == "brickbounce") {
+    // brickbounce 0|1: Super Mario Bros. / The Lost Levels' NES brick bounce (SmasGame::setNesBrickBounce)
+    int v = 1;
+    ss >> v;
+    g_game->setNesBrickBounce(v != 0);
   } else if (cmd == "msustat") {
     printf("msu %s track=%d playing=%d\n", s.msu ? "on" : "off", s.msu ? s.msu->track() : -1, s.msu && s.msu->playing());
   } else if (cmd == "skiprender") {

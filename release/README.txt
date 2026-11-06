@@ -224,6 +224,9 @@ shown centred, as they were designed as a single screen.
                  make the launcher lighter on slow devices (no preview runs
                  for a card with a cover).
   Audio          volume, latency, and Music Pack (custom soundtracks, below).
+  Gameplay       NES Brick Bounce: in Super Mario Bros. and The Lost Levels,
+                 breaking a brick from below sends Mario back down as on the
+                 NES (All-Stars lets him keep rising). Off by default.
 
 
 =====================================================================
@@ -345,6 +348,8 @@ Third-party components:
   DejaVu Sans font (Linux build) - DejaVu fonts team, Bitstream Vera licence.
   Luckiest Guy font - Astigmatic, Apache License 2.0.
   stb_image (reading your cover pictures) - Sean Barrett, public domain / MIT.
+  NES Brick Bounce - BMF54123's SMAS brick block fix (updated by Blittle
+    McNilsen).
   librashader (Windows slang shaders) - Mozilla Public License 2.0
     (librashader-LICENSE.md; source: github.com/SnowflakePowered/librashader).
   Included slang shader presets, unmodified from the libretro slang-shaders

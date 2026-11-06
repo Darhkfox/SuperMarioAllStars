@@ -194,6 +194,7 @@ What each page holds:
   Mario's Colours / Luigi's Colours: alternate outfits for each brother (Super Mario Bros. and The
   Lost Levels), kept by each in co-op whichever is the game's player.
 * **Audio** — volume, latency, mute when unfocused, and **Music Pack**: an MSU-1 custom soundtrack (see below).
+* **Gameplay** — **NES Brick Bounce**: in Super Mario Bros. and The Lost Levels, a brick broken from below sends Mario back down as on the NES instead of letting him keep rising (BMF54123's brick fix, updated by Blittle McNilsen, written into the console's ROM while on: `SmasGame::setNesBrickBounce`). Off by default.
 * **Credits** — where to find the author (YouTube, Reddit, GitHub; each opens in your browser).
 * **CO-OP GAME on the title screens** of Super Mario Bros., The Lost Levels and Super Mario Bros. 3:
   a third choice under 1 PLAYER GAME / 2 PLAYER GAME (MARIO GAME / LUIGI GAME; in SMB3 a fourth,
