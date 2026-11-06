@@ -73,7 +73,7 @@ struct Config {
   bool launcherAllStars = true;   // the launcher shows one card: Super Mario All-Stars (its own game select)
   bool launcherCovers = false;    // the cards show the player's covers (covers folder) in place of live previews
   bool launcherBackground = false;  // the launcher's background is the player's picture (covers/background.png)
-  bool launcherCoverFill = true;   // covers fill their frames (trimmed); else shown whole
+  bool launcherCoverFill = false;  // covers fill their frames (trimmed); else shown whole (the default)
   bool hudAnchor = true;
   bool dimWrap = true;         // SMB2: dim the margins of areas that wrap round
   int pillarbox = 1;           // 0 black, 1 blurred game, 2 dark frame

@@ -220,6 +220,8 @@ shown centred, as they were designed as a single screen.
                      Switch the option off and on again to read new ones.
                    Android: Choose Cover / Choose Background pick a picture
                      from your phone.
+                 "Cover Shape": Whole Cover (the default: all of it, with
+                 bars beside a tall box) or Fill the Frame (trimmed to fill).
                  A card without a cover keeps its live preview. Covers also
                  make the launcher lighter on slow devices (no preview runs
                  for a card with a cover).

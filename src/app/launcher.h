@@ -107,7 +107,7 @@ private:
   };
   Art cover_[kCards + 1], bgArt_;
   std::wstring artDir_;
-  bool useCovers_ = false, useBg_ = false, coverFill_ = true;
+  bool useCovers_ = false, useBg_ = false, coverFill_ = false;
   void readArt(Art& a, const char* name);
   int artImage(Canvas* cv, Art& a);
   void freeArt();
