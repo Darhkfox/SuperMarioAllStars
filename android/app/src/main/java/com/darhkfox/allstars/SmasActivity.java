@@ -11,10 +11,13 @@ import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.OpenableColumns;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +45,31 @@ public class SmasActivity extends SDLActivity {
     }
 
     // ---- ROM picker (called from native code, app_android.cpp) ----------------------------------------
+    // A web page (the update check: GitHub's latest release), its body; null if it couldn't be had.
+    // Called from the native update checker's own thread.
+    public static String httpGet(String url) {
+        HttpURLConnection c = null;
+        try {
+            c = (HttpURLConnection) new URL(url).openConnection();
+            c.setConnectTimeout(8000);
+            c.setReadTimeout(8000);
+            c.setRequestProperty("Accept", "application/vnd.github+json");
+            c.setRequestProperty("User-Agent", "SuperMarioAllStars-port");
+            if (c.getResponseCode() != 200) return null;
+            InputStream in = c.getInputStream();
+            ByteArrayOutputStream o = new ByteArrayOutputStream();
+            byte[] b = new byte[4096];
+            int n;
+            while ((n = in.read(b)) > 0 && o.size() < (1 << 20)) o.write(b, 0, n);
+            in.close();
+            return o.toString("UTF-8");
+        } catch (Exception e) {
+            return null;
+        } finally {
+            if (c != null) c.disconnect();
+        }
+    }
+
     public static void pickRoms() {
         pickResult = -1;
         final SDLActivity act = mSingleton;

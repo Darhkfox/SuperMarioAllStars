@@ -3,6 +3,7 @@
 // main loop, video, sound, controllers) is in app_win.cpp (Windows) and
 // platform/android/app_android.cpp (Android).
 #pragma once
+#include "app/updatecheck.h"
 #include <cstdint>
 #include <cstdio>
 #include <memory>
@@ -41,6 +42,9 @@ struct App {
   bool focused = true;
   Config cfg;
   std::wstring exeDir, configPath, saveDir, shotDir, romPath;
+  UpdateCheck updater;      // (a newer release on GitHub? see updatecheck.h)
+  std::string updateTag;    // the newer release's tag ("v1.2"), or empty
+  bool updateManual = false, updateStarted = false, updateTold = false;
   std::wstring msuDir;     // MSU-1 music packs (see app/msupack.h); exeDir/msu unless the platform says
   std::wstring msuLoaded;  // the pack the console runs with (empty: none)
   std::string msuStatus;   // what became of the chosen pack, for the Audio page
@@ -200,7 +204,13 @@ struct App {
   void launchGame(GameId g);
   void returnToLauncher();
   void applyMsu(std::vector<uint8_t>& rom);  // (loadRom: the chosen pack's patch and chip)
-  void reloadForMsu();                        // the chosen pack changed: the ROM again, outside a game
+  void reloadForMsu();
+  void checkForUpdate(bool manual);  // (manual: Check Now, which says what it found)
+  void updateTick();                 // (each pass: a finished check's result)
+  void applyUpdateTag(const std::string& tag);
+  std::string updateVersion() const {  // ("v1.2": "1.2")
+    return updateTag.size() > 1 && (updateTag[0] == 'v' || updateTag[0] == 'V') ? updateTag.substr(1) : updateTag;
+  }                        // the chosen pack changed: the ROM again, outside a game
   void frameLauncher(double dt, int gameFrames);
   std::string blackFramesNote() const;
   void applyDisplayMode();

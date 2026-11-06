@@ -537,6 +537,35 @@ void Launcher::draw(Menu& menu, int w, int h) {
       linkHit_ = rectF(m, m, m + bw, m + lhgt + H * 0.004f + lh(fs));
     }
   }
+  // A newer release: a badge, top right (it opens its page)
+  updateHit_ = RectF{};
+  if (!updateTag_.empty()) {
+    // (beside the title if there's room; else, shorter, under the Patreon link)
+    const std::string ver = updateTag_.size() > 1 && (updateTag_[0] == 'v' || updateTag_[0] == 'V') ? updateTag_.substr(1)
+                                                                                                    : updateTag_;
+    std::string t = "Update available: v" + ver;
+    const float fs = fSmall, bh = lh(fs) * 1.45f, m = logoM;
+    float bw = measure(t, fs, true) + bh * 1.7f;
+    RectF r;
+    if (W - m - bw >= (W + tw) * 0.5f + m) {
+      r = rectF(W - m - bw, H * 0.075f, W - m, H * 0.075f + bh);
+    } else {
+      t = "v" + ver + " available";
+      bw = measure(t, fs, true) + bh * 1.7f;
+      const float top = linkHit_.bottom > linkHit_.top ? linkHit_.bottom + H * 0.012f : m;
+      r = rectF(m, top, m + bw, top + bh);
+    }
+    const float pulse = 0.5f + 0.5f * std::sin(time_ * 3.0f);
+    menu.fillRound(rectF(r.left - 3, r.top - 3, r.right + 3, r.bottom + 3), bh * 0.5f + 3,
+                   colorF(1.0f, 0.85f, 0.25f, 0.25f + 0.25f * pulse));
+    menu.fillRound(r, bh * 0.5f, argb(0xFFFFD400));
+    menu.outlineRound(r, bh * 0.5f, std::max(2.0f, H / 360.0f), argb(0xFF3A1D0E));
+    menu.star(r.left + bh * 0.55f, (r.top + r.bottom) * 0.5f, bh * 0.28f, argb(0xFFFFFFFF), argb(0xFF3A1D0E),
+              std::max(1.0f, H / 700.0f));
+    cv->text(Menu::widen(t), rectF(r.left + bh * 1.0f, r.top, r.right - bh * 0.5f, r.bottom), fs, kWeightBold,
+             argb(0xFF3A1D0E), kAlignCenter, kParaCenter);
+    updateHit_ = r;
+  }
   text(W * 0.5f, ty0, std::string("Super Nintendo classics  \xE2\x80\xA2  ") + kEdition + "  \xE2\x80\xA2  v" + version_, fBody, false,
        argb(0xFF9AA4BA), 1);
   ty0 += lh(fBody);
@@ -765,8 +794,9 @@ bool Launcher::overLink(float x, float y) const {
 }
 
 Launcher::Action Launcher::tap(float x, float y) {
-  if (overLink(x, y)) return kPatreon;
   auto in = [&](const RectF& r) { return x >= r.left && x < r.right && y >= r.top && y < r.bottom; };
+  if (!updateTag_.empty() && in(updateHit_)) return kUpdate;
+  if (overLink(x, y)) return kPatreon;
   const int N = (int)cards_.size();
   for (int i = 0; i < (int)cardHits_.size() && i < N; i++)
     if (in(cardHits_[i])) {

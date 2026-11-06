@@ -68,6 +68,30 @@ std::vector<std::wstring> romDirs(const std::wstring& data) {
 }  // namespace
 
 void openUrl(const char* url) { SDL_OpenURL(url); }
+
+bool httpGet(const char* url, std::string& out) {
+  out.clear();
+  JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();  // (attaches this thread)
+  jobject act = (jobject)SDL_AndroidGetActivity();
+  if (!env || !act) return false;
+  jclass cls = env->GetObjectClass(act);
+  if (jmethodID m = env->GetStaticMethodID(cls, "httpGet", "(Ljava/lang/String;)Ljava/lang/String;")) {
+    jstring u = env->NewStringUTF(url);
+    jstring r = (jstring)env->CallStaticObjectMethod(cls, m, u);
+    if (r) {
+      if (const char* c = env->GetStringUTFChars(r, nullptr)) {
+        out = c;
+        env->ReleaseStringUTFChars(r, c);
+      }
+      env->DeleteLocalRef(r);
+    }
+    env->DeleteLocalRef(u);
+  }
+  env->ExceptionClear();
+  env->DeleteLocalRef(cls);
+  env->DeleteLocalRef(act);
+  return !out.empty();
+}
 void openFolder(const std::wstring&) {}
 
 // (Android has one full-screen window: the aspect and scaling settings apply as it's drawn)

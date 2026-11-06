@@ -245,6 +245,12 @@ shown centred, as they were designed as a single screen.
   Audio          volume, Music Volume and Sound Effects Volume (set music to
                  0% to play with sound effects only, or the other way round),
                  latency, and Music Pack (custom soundtracks, below).
+  Updates        "Check for Updates" (on by default): once a day the launcher
+                 looks up the latest release on GitHub and shows a badge when
+                 there's a newer version (select it to open the download
+                 page). Nothing about you or your games is sent; turn it off
+                 here, or use Check Now. Nothing is downloaded or installed
+                 by itself.
   Gameplay       NES Brick Bounce: in Super Mario Bros. and The Lost Levels,
                  breaking a brick from below sends Mario back down as on the
                  NES (All-Stars lets him keep rising). Off by default.

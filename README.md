@@ -199,6 +199,10 @@ What each page holds:
   port, ? block switches), *Themed Dark* (the dark panel under a heading in the game's pattern: bricks, the Lost
   Levels' green bricks, SMB2's starry night, SMB3's checkers) or *Classic* (the original dark panel). `src/app/menu.cpp`.
 * **Audio** — volume, **Music Volume** and **Sound Effects Volume** (each 0–100%: music off with the sound effects kept, or the other way round; the sound driver marks the voices an effect holds at ARAM `$1A`, so the rest are the music and only the mix changes), latency, mute when unfocused, and **Music Pack**: an MSU-1 custom soundtrack (see below).
+* **Updates** — *Check for Updates* (on by default): once a day the launcher reads GitHub's public "latest release" for
+  this repository (`src/app/updatecheck.cpp`; WinHTTP on Windows, the system `curl` on Linux, `HttpURLConnection` on
+  Android, from a background thread) and shows a badge when its tag is newer than the app's version; the badge, or
+  *Get Version*, opens the release page. Nothing is sent but the request; nothing is downloaded or installed.
 * **Gameplay** — **NES Brick Bounce**: in Super Mario Bros. and The Lost Levels, a brick broken from below sends Mario back down as on the NES instead of letting him keep rising (BMF54123's brick fix, updated by Blittle McNilsen, written into the console's ROM while on: `SmasGame::setNesBrickBounce`). Off by default.
 * **Credits** — where to find the author (YouTube, Reddit, GitHub; each opens in your browser).
 * **CO-OP GAME on the title screens** of Super Mario Bros., The Lost Levels and Super Mario Bros. 3:
