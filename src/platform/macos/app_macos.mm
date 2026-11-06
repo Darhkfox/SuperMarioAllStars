@@ -9,6 +9,7 @@
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #include <SDL.h>
 #include <SDL_metal.h>
+#include <SDL_syswm.h>
 #include <unistd.h>
 #include <algorithm>
 #include <cmath>
@@ -30,6 +31,20 @@ namespace {
 int lockedRefreshes(double hz) {
   int k = (int)std::lround(hz / Snes::kFrameRate);
   return k >= 1 && std::fabs(hz / k - Snes::kFrameRate) / Snes::kFrameRate < 0.025 ? k : 0;
+}
+
+// The refresh rate of the display the window is on (0 if unknown).
+double screenHz(SDL_Window* window) {
+  SDL_SysWMinfo wm;
+  SDL_VERSION(&wm.version);
+  if (SDL_GetWindowWMInfo(window, &wm) && wm.info.cocoa.window) {
+    NSScreen* screen = wm.info.cocoa.window.screen;
+    if (screen && screen.maximumFramesPerSecond > 0) return (double)screen.maximumFramesPerSecond;
+  }
+  SDL_DisplayMode m;
+  int di = SDL_GetWindowDisplayIndex(window);
+  if (SDL_GetCurrentDisplayMode(di < 0 ? 0 : di, &m) == 0 && m.refresh_rate > 0) return m.refresh_rate;
+  return 0;
 }
 
 // The bundle's Resources (the font), and the folder the app is in (where a
@@ -241,6 +256,12 @@ bool App::init() {
   if (haveRom) romReady();
   applyConfig();
   inLauncher = true;
+  // (--game smb1|smbll|smb2|smb3|allstars: straight into it, as on Windows)
+  if (haveRom && !startGame.empty()) {
+    static const wchar_t* kIds[Launcher::kCards + 1] = {L"smb1", L"smbll", L"smb2", L"smb3", L"allstars"};
+    for (int i = 0; i <= Launcher::kCards; i++)
+      if (startGame == kIds[i]) launchGame(Launcher::cardGame(i));
+  }
   if (!achStore.noticeShown) {
     achStore.noticeShown = true;
     achStore.save();
@@ -277,6 +298,7 @@ void App::run() {
   int nIntervals = 0;
   Uint64 statsAt = last;
   const Uint64 started = last;
+  double vbCarry = 0;
   while (running) @autoreleasepool {
     SDL_Event e;
     while (SDL_PollEvent(&e)) {
@@ -352,17 +374,16 @@ void App::run() {
     double dt = (double)(now - last) / freq;
     last = now;
     intervals[nIntervals++ % 48] = (float)dt;
-    double hz = 60.0;
-    if (nIntervals >= 48) {
+    // (the display's own rate: Metal hands out drawables unevenly, so the
+    // passes' spacing only averages to it; measured where it isn't known)
+    double hz = screenHz(window);
+    if (hz <= 0 && nIntervals >= 48) {
       float d[48];
       std::copy(intervals, intervals + 48, d);
       std::nth_element(d, d + 24, d + 48);
       if (d[24] > 0.002f) hz = 1.0 / d[24];
-    } else {
-      SDL_DisplayMode m;
-      int di = SDL_GetWindowDisplayIndex(window);
-      if (SDL_GetCurrentDisplayMode(di < 0 ? 0 : di, &m) == 0 && m.refresh_rate > 0) hz = m.refresh_rate;
     }
+    if (hz <= 0) hz = 60.0;
     if (pacing.mode != kPaceVsync || lockedRefreshes(hz) != pacing.perFrame) {
       pacing = Pacing();
       pacing.mode = kPaceVsync;
@@ -371,9 +392,14 @@ void App::run() {
     }
     pacing.hz = hz;
     int frames = 0;
-    int vb = std::max(1, (int)std::lround(dt * hz));  // refreshes since the last pass
+    // refreshes since the last pass (the fraction left kept for the next: a
+    // late pass and an early one after it count one each, not two and one)
+    vbCarry += dt * hz;
+    int vb = std::max(1, (int)std::lround(vbCarry));
+    vbCarry = std::clamp(vbCarry - vb, -0.5, 0.5);
     if (vb > 6) {  // stalled (the window dragged, a dialog): resume without fast-forwarding
       vb = 0;
+      vbCarry = 0;
       pacing.vblanks = 0;
       pacing.accum = 0;
       frames = 1;
@@ -419,7 +445,9 @@ int main(int argc, char** argv) {
   std::unique_ptr<App> app = std::make_unique<App>();
   g_app = app.get();
   for (int i = 1; i < argc; i++) {
-    if (!strcmp(argv[i], "--shot") && i + 1 < argc) {
+    if (!strcmp(argv[i], "--game") && i + 1 < argc) {
+      app->startGame = widenUtf8(argv[++i]);
+    } else if (!strcmp(argv[i], "--shot") && i + 1 < argc) {
       g_shotPath = argv[++i];
       if (i + 1 < argc && atof(argv[i + 1]) > 0) g_shotAfter = atof(argv[++i]);
     } else {
