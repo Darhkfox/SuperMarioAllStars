@@ -332,6 +332,12 @@ void Launcher::drawBackground(Menu& menu, float W, float H) {
         float a = (y - (H - shade)) / shade;
         cv->fillRect(rectF(0, y, W, y + 2), colorF(0.0f, 0.0f, 0.03f, 0.75f * a * a));
       }
+      // (and at the top, behind the logo, the title and the line under it)
+      const float top = H * 0.24f;
+      for (float y = 0; y < top; y += 2) {
+        float a = 1.0f - y / top;
+        cv->fillRect(rectF(0, y, W, y + 2), colorF(0.0f, 0.0f, 0.03f, 0.7f * a * (2.0f - a) * 0.75f));
+      }
       return;
     }
   }
@@ -429,12 +435,28 @@ void Launcher::draw(Menu& menu, int w, int h) {
     return t.empty() ? 0.0f : cv->measure(Menu::widen(t), size, bold ? kWeightBold : kWeightNormal);
   };
   // text from its top edge: left, centred on x, or right
+  // (over the player's own background picture, text gets a dark outline: it reads over anything)
+  const bool customBg = useBg_ && bgArt_.w > 0;
   const auto text = [&](float x, float y, const std::string& t, float size, bool bold, ColorF c, int align,
                         float scale = 1.0f) {
     float sz = size * scale, l = lh(size, scale);
     RectF r = align == 0   ? rectF(x, y, x + 20000, y + l)
                     : align == 1 ? rectF(x - 10000, y, x + 10000, y + l)
                                  : rectF(x - 20000, y, x, y + l);
+    if (customBg) {
+      const std::wstring ws = Menu::widen(t);
+      const float o = std::max(1.0f, sz * 0.07f);
+      const TextAlign al = align == 0 ? kAlignLeading : align == 1 ? kAlignCenter : kAlignTrailing;
+      for (int k = 0; k < 8; k++) {
+        const float ang = k * 3.14159265f / 4;
+        cv->text(ws, rectF(r.left + std::cos(ang) * o, r.top + std::sin(ang) * o, r.right + std::cos(ang) * o,
+                           r.bottom + std::sin(ang) * o),
+                 sz, bold ? kWeightBold : kWeightNormal, colorF(0, 0, 0.02f, 0.8f * c.a), al, kParaNear);
+      }
+      // (the grey lines lighter, the outline doing the separating)
+      if (c.r < 0.75f && std::fabs(c.r - c.b) < 0.2f && std::fabs(c.g - c.b) < 0.2f)
+        c = colorF(c.r + (1 - c.r) * 0.55f, c.g + (1 - c.g) * 0.55f, c.b + (1 - c.b) * 0.55f, c.a);
+    }
     cv->text(Menu::widen(t), r, sz, bold ? kWeightBold : kWeightNormal, c,
              align == 0   ? kAlignLeading
              : align == 1 ? kAlignCenter
