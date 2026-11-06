@@ -1,5 +1,5 @@
 SUPER MARIO ALL-STARS - PC, STEAM DECK & ANDROID PORT
-Version 1.0
+Version 1.1
 
 A native Windows, Linux (Steam Deck) and Android version of Super Mario
 All-Stars (SNES), with true widescreen, simultaneous two-player co-op, a
@@ -8,6 +8,17 @@ and a music player.
 
 The four games: Super Mario Bros., Super Mario Bros.: The Lost Levels,
 Super Mario Bros. 2 and Super Mario Bros. 3.
+
+New in 1.1:
+  - Custom soundtracks: MSU-1 music packs (see CUSTOM SOUNDTRACKS below),
+    in the games and the Music Player.
+  - Your own game covers and launcher background.
+  - Four menu styles (Storybook, Retro, Themed Dark, Classic).
+  - NES Brick Bounce option, Menu Buttons swap (Xbox / Nintendo layout),
+    achievements export (CSV and badges, for Playnite).
+  - Steam Deck / Linux version.
+  - Faster launcher, smoother on slower PCs and phones, a fix for slowdown
+    with G-SYNC / VSync, and many widescreen, co-op and other bug fixes.
 
 
 =====================================================================
