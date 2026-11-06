@@ -1094,7 +1094,11 @@ std::shared_ptr<MenuPage> App::pageDisplay() {
           applyDisplayMode();
           menu.refresh();
         },
+#ifdef __APPLE__
+        "Ctrl+Cmd+F or Option+Return toggles windowed mode."));
+#else
         "F11 toggles windowed mode."));
+#endif
 #endif
     pg.items.push_back(MenuItem::choice(
         "Aspect Ratio", {"4:3 (Original)", "16:10 Widescreen", "16:9 Widescreen", "21:9 Ultrawide", "Auto (Fill Display)"},

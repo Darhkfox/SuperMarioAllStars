@@ -535,9 +535,12 @@ void Launcher::draw(Menu& menu, int w, int h) {
          false, an > 0.5f ? argb(0xFF10131A) : argb(0xFFD8DDE8), 1, bs);
     bx += bws[i] + bgap;
   }
-  text(W * 0.5f, H - lh(fSmall) * 1.6f,
-       hint_.empty() ? "\xE2\x86\x90\xE2\x86\x92 Choose    Enter / (A) Play    F11 Fullscreen    Esc Quit" : hint_, fSmall,
-       false, argb(0xFFA3B0CC), 1);
+#ifdef __APPLE__
+  const char* kHint = "\xE2\x86\x90\xE2\x86\x92 Choose    Enter / (A) Play    Ctrl+Cmd+F Fullscreen    Esc Quit";
+#else
+  const char* kHint = "\xE2\x86\x90\xE2\x86\x92 Choose    Enter / (A) Play    F11 Fullscreen    Esc Quit";
+#endif
+  text(W * 0.5f, H - lh(fSmall) * 1.6f, hint_.empty() ? kHint : hint_, fSmall, false, argb(0xFFA3B0CC), 1);
 }
 
 bool Launcher::overLink(float x, float y) const {
