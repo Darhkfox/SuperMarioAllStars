@@ -244,6 +244,7 @@ bool Config::load(const std::wstring& path) {
   geti("display.pillarbox", pillarbox, 0, 2);
   geti("display.widescreen_enemies", widescreenEnemies, 0, 1);
   getb("game.coop", coop);
+  getb("game.nes_brick_bounce", nesBrickBounce);
   geti("graphics.filter", filter, 0, kFilterCount - 1);
   geti("graphics.scanlines", scanlines, 0, 100);
   geti("graphics.crt_curve", crtCurve, 0, 100);
@@ -261,6 +262,8 @@ bool Config::load(const std::wstring& path) {
   geti("audio.volume", volume, 0, 100);
   getb("audio.mute_unfocused", muteUnfocused);
   geti("audio.latency", audioLatency, 20, 200);
+  if (kv.count("audio.msu_pack")) msuPack = widen(kv["audio.msu_pack"]);
+  geti("audio.msu_volume", msuVolume, 0, 100);
   geti("input.select_button", selectMode, 0, 1);
   geti("input.deadzone", deadzone, 5, 90);
   geti("input.touch_mode", touchMode, 0, 2);
@@ -303,6 +306,7 @@ bool Config::save(const std::wstring& path) const {
   f << "widescreen_enemies=" << widescreenEnemies << "\n";
   f << "[game]\n";
   f << "coop=" << coop << "\n";
+  f << "nes_brick_bounce=" << nesBrickBounce << "\n";
   f << "[launcher]\n";
   f << "last_game=" << lastGame << "\n";
   f << "allstars_only=" << launcherAllStars << "\n";
@@ -329,6 +333,8 @@ bool Config::save(const std::wstring& path) const {
   f << "volume=" << volume << "\n";
   f << "mute_unfocused=" << muteUnfocused << "\n";
   f << "latency=" << audioLatency << "\n";
+  f << "msu_pack=" << narrow(msuPack) << "\n";
+  f << "msu_volume=" << msuVolume << "\n";
   f << "[input]\n";
   f << "select_button=" << selectMode << "\n";
   f << "deadzone=" << deadzone << "\n";

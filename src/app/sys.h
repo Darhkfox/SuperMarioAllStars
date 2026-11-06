@@ -21,6 +21,8 @@ bool fileModified(const std::wstring& path, int* day, int* month, int* hour, int
 void makeDir(const std::wstring& path);
 // The names of the files in a folder (not folders); false if it can't be read.
 bool listFiles(const std::wstring& dir, std::vector<std::wstring>& names);
+// ... and of the folders in it.
+bool listDirs(const std::wstring& dir, std::vector<std::wstring>& names);
 
 // Local time now, strftime-formatted.
 std::string timeText(const char* fmt);

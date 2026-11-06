@@ -9,6 +9,7 @@
 #include <cstring>
 #include <ctime>
 #include <filesystem>
+#include "app/msupack.h"
 #include "app/sys.h"
 #include "app/vkeys.h"
 #include "core/fileio.h"
@@ -90,7 +91,11 @@ bool App::loadRom() {
   romExact = exact;
   game.reset();  // (before the Snes it points at: its destructor uses it)
   snes = std::make_unique<Snes>();
-  if (!snes->loadRom(data)) {
+  // (the console's copy patched for an MSU-1 pack if one is chosen; the
+  // launcher's previews run the ROM as it is)
+  std::vector<uint8_t> run = data;
+  applyMsu(run);
+  if (!snes->loadRom(run)) {
     snes.reset();
     return false;
   }
@@ -102,9 +107,55 @@ bool App::loadRom() {
   return true;
 }
 
+// The chosen MSU-1 pack (see app/msupack.h): its patch applied to the
+// console's ROM and the chip attached, or why not (msuStatus).
+void App::applyMsu(std::vector<uint8_t>& rom) {
+  if (msuDir.empty()) msuDir = pathJoin(exeDir, L"msu");
+  makeDir(msuDir);
+  msuLoaded = cfg.msuPack;
+  msuStatus.clear();
+  msuBase.clear();
+  if (cfg.msuPack.empty()) return;
+  MsuPack pk;
+  std::string err;
+  std::vector<uint8_t> patch;
+  if (findMsuPack(msuDir, cfg.msuPack, pk, &err)) {
+    if (!readFile(pk.patch, patch, 16u << 20)) {
+      err = "its patch can't be read";
+    } else {
+      std::vector<uint8_t> patched = rom;
+      if ((patched.size() & 0x3ff) == 0x200) patched.erase(patched.begin(), patched.begin() + 0x200);
+      if (applyRomPatch(patch, patched, &err)) {
+        rom.swap(patched);
+        snes->msu = std::make_unique<Msu1>();
+        snes->msu->open(pk.base);
+        snes->msu->setGain(cfg.msuVolume / 100.0f);
+        msuBase = pk.base;
+        msuStatus = "Playing " + narrow(cfg.msuPack) + ": " + std::to_string(pk.tracks) + " tracks, patched with " +
+                    narrow(pathName(pk.patch)) + ".";
+        logf("MSU-1 pack %s: %d tracks, patch %s", narrow(cfg.msuPack).c_str(), pk.tracks,
+             narrow(pk.patch).c_str());
+        return;
+      }
+    }
+  }
+  msuStatus = "Not used: " + err + ".";
+  logf("MSU-1 pack %s not used: %s", narrow(cfg.msuPack).c_str(), err.c_str());
+}
+
+// Another pack chosen: the console is rebuilt with it (outside a game: the
+// launcher shows). Save files are kept; a game's save states belong with the
+// pack they were made with.
+void App::reloadForMsu() {
+  if (!snes || cfg.msuPack == msuLoaded) return;
+  saveSram();
+  if (loadRom()) romReady();
+}
+
 // After the ROM is loaded (at start, or found later while the launcher shows).
 void App::romReady() {
   music.init(snes.get(), game.get(), &audio);
+  music.setMsu(msuBase, narrow(msuLoaded), cfg.msuVolume / 100.0f);  // (the Music Player plays the pack too)
   achNewRun(cfg.achievements);
   applyConfig();
   if (!test.on && test.runSeconds <= 0)
@@ -135,6 +186,8 @@ void App::launchGame(GameId g) {
 #endif
     return;
   }
+  reloadForMsu();  // (a pack chosen in a game: in use from this start)
+  if (!snes) return;
   playing = g;
   for (int i = 0; i < Launcher::kCards; i++)
     if (Launcher::cardGame(i) == g) cfg.lastGame = i;
@@ -176,6 +229,7 @@ void App::returnToLauncher() {
   menu.closeAll();
   launcher.selectGame(playing);
   inLauncher = true;
+  reloadForMsu();
 }
 
 // A display refresh on the launcher: its cards and buttons (or a menu page
@@ -365,10 +419,13 @@ void App::applyConfig() {
   audio.setVolume(cfg.volume / 100.0f);
   audio.setLatency(cfg.audioLatency);
   if (snes) snes->ppu.noSpriteLimit = cfg.noSpriteLimit;
+  if (snes && snes->msu) snes->msu->setGain(cfg.msuVolume / 100.0f);
+  music.setMsuGain(cfg.msuVolume / 100.0f);
   if (game) {
     game->hudAnchor = cfg.hudAnchor;
     game->dimWrap = cfg.dimWrap;
     game->enemyRange = cfg.widescreenEnemies != 0;
+    game->setNesBrickBounce(cfg.nesBrickBounce);
     game->coop = cfg.coop;
     game->setCheats(achLocked() ? 0 : cfg.cheats);  // (achievements on: no cheats)
     game->playerPalette = cfg.playerPalette;
@@ -787,7 +844,8 @@ std::shared_ptr<MenuPage> App::pageOptions() {
                                          "Filters, CRT effects and sprite options."));
     pg.items.push_back(MenuItem::submenu("Colour", [this]() { menu.push(pageColor()); },
                                          "Colour profiles, picture adjustments and accessibility filters."));
-    pg.items.push_back(MenuItem::submenu("Audio", [this]() { menu.push(pageAudio()); }, "Volume and latency."));
+    pg.items.push_back(MenuItem::submenu("Audio", [this]() { menu.push(pageAudio()); },
+                                         "Volume, latency and custom soundtracks (MSU-1 music packs)."));
     pg.items.push_back(MenuItem::submenu("Controls", [this]() { menu.push(pageControls()); },
                                          "Keyboard and joypad bindings for both players."));
     pg.items.push_back(MenuItem::header("Launcher"));
@@ -846,6 +904,15 @@ std::shared_ptr<MenuPage> App::pageOptions() {
     }, "Where your covers and background go. After adding pictures, switch Game Covers (or Custom Background) "
        "off and on again to read them."));
 #endif
+    pg.items.push_back(MenuItem::header("Gameplay"));
+    pg.items.push_back(MenuItem::toggle(
+        "NES Brick Bounce", [this]() { return cfg.nesBrickBounce ? 1 : 0; },
+        [this](int v) {
+          cfg.nesBrickBounce = v != 0;
+          applyConfig();
+        },
+        "Super Mario Bros. and The Lost Levels: breaking a brick from below sends Mario back down, as on the NES. "
+        "Off: he keeps rising, as in the original All-Stars. (BMF54123's brick fix.)"));
     pg.items.push_back(MenuItem::header("Multiplayer"));
     pg.items.push_back(MenuItem::toggle(
         "Two-Player Co-op", [this]() { return cfg.coop ? 1 : 0; },
@@ -1345,6 +1412,58 @@ std::shared_ptr<MenuPage> App::pageAudio() {
                                         " ms", "Lower values respond faster; raise it if you hear crackling."));
     pg.items.push_back(MenuItem::toggle("Mute When Unfocused", [this]() { return cfg.muteUnfocused ? 1 : 0; },
                                         [this](int v) { cfg.muteUnfocused = v; }));
+    // MSU-1 music packs (app/msupack.h): Off, then the msu folder's packs
+    pg.items.push_back(MenuItem::header("Custom Soundtrack (MSU-1)"));
+    if (msuDir.empty()) msuDir = pathJoin(exeDir, L"msu");
+    auto packs = std::make_shared<std::vector<std::wstring>>(listMsuPacks(msuDir));
+    if (!cfg.msuPack.empty() && std::find(packs->begin(), packs->end(), cfg.msuPack) == packs->end())
+      packs->push_back(cfg.msuPack);  // (chosen, since gone: shown so it can be turned off)
+    std::vector<std::string> names = {"Off"};
+    for (const auto& n : *packs) names.push_back(narrow(n));
+    std::string help;
+    if (!cfg.msuPack.empty() && cfg.msuPack == msuLoaded && !msuStatus.empty()) help = msuStatus + " ";
+    else if (cfg.msuPack != msuLoaded)
+      help = inLauncher ? "Starts when you next start a game. "
+                        : "Choose Restart With This Pack below to hear it now (or it starts with your next game). ";
+    help += packs->empty() ? "Put a pack in its own folder in the msu folder: its MSU-1 patch (.bps or .ips) and "
+                             "its tracks (.pcm), then come back here."
+                           : "A pack is a folder in the msu folder: its MSU-1 patch (.bps or .ips) and tracks (.pcm).";
+    pg.items.push_back(MenuItem::choice(
+        "Music Pack", names,
+        [this, packs]() {
+          for (size_t i = 0; i < packs->size(); i++)
+            if ((*packs)[i] == cfg.msuPack) return (int)i + 1;
+          return 0;
+        },
+        [this, packs](int v) {
+          cfg.msuPack = v <= 0 ? std::wstring() : (*packs)[(size_t)std::min<int>(v, (int)packs->size()) - 1];
+          if (inLauncher) {
+            reloadForMsu();
+            if (!cfg.msuPack.empty() && !(snes && snes->msu)) menu.notify(msuStatus, 5.0f);
+          }
+          if (!test.on && test.runSeconds <= 0) cfg.save(configPath);
+          menu.refresh();  // (its help says what became of it)
+        },
+        help));
+    if (!inLauncher && snes && cfg.msuPack != msuLoaded) {
+      // (in a game: the console is rebuilt with the pack, so the game starts again)
+      pg.items.push_back(MenuItem::action("Restart With This Pack", [this]() {
+        menu.confirm("Restart the game with this music?", [this]() { launchGame(playing); },
+                     "The game starts again from its title. Progress since your last save is lost.");
+      }, "Starts the game again from its title with the chosen music pack (or none)."));
+    }
+    pg.items.push_back(MenuItem::slider("Music Pack Volume", 0, 100, 5, [this]() { return cfg.msuVolume; },
+                                        [this](int v) {
+                                          cfg.msuVolume = v;
+                                          applyConfig();
+                                        },
+                                        "%"));
+#ifndef __ANDROID__
+    pg.items.push_back(MenuItem::action("Open MSU-1 Folder", [this]() {
+      makeDir(msuDir);
+      openFolder(msuDir);
+    }, "Where music packs go: one folder per pack."));
+#endif
   };
   return p;
 }

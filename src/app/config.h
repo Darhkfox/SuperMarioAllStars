@@ -79,6 +79,7 @@ struct Config {
   int pillarbox = 1;           // 0 black, 1 blurred game, 2 dark frame
   int widescreenEnemies = 1;   // 1 = enemies active in full view
   bool coop = false;           // SMB1, LL, SMB3: two players at once, Luigi on controller 2
+  bool nesBrickBounce = false; // SMB1, LL: a brick broken from below sends Mario back down, as on the NES
   // Graphics
   int filter = kFilterSharp;
   int scanlines = 45;          // 0-100
@@ -96,6 +97,8 @@ struct Config {
   int volume = 80;
   bool muteUnfocused = false;
   int audioLatency = 64;       // ms
+  std::wstring msuPack;        // an MSU-1 music pack: its folder in the msu folder, or empty (see app/msupack.h)
+  int msuVolume = 100;         // its music's volume, percent
   int interpolation = 0;       // 0 = hardware gaussian
   // Input
   int selectMode = 0;          // 0 = Select opens the menu, 1 = tap: game Select / hold: menu

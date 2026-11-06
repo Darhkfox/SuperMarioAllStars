@@ -23,6 +23,7 @@ add_library(main SHARED
   ${SRC}/core/ppu.cpp
   ${SRC}/core/snes.cpp
   ${SRC}/core/rewind.cpp
+  ${SRC}/core/msu1.cpp
   ${SRC}/core/png.cpp
   ${SRC}/core/fileio.cpp
   ${SRC}/core/disasm.cpp
@@ -43,6 +44,7 @@ add_library(main SHARED
   ${SRC}/app/utf8.cpp
   ${SRC}/app/sys_posix.cpp
   ${SRC}/app/imageload.cpp
+  ${SRC}/app/msupack.cpp
   ${SRC}/platform/android/app_android.cpp
   ${SRC}/platform/android/video_gles.cpp
   ${SRC}/platform/android/audio_sdl.cpp
