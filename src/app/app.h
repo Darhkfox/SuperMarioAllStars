@@ -44,6 +44,7 @@ struct App {
   std::wstring msuDir;     // MSU-1 music packs (see app/msupack.h); exeDir/msu unless the platform says
   std::wstring msuLoaded;  // the pack the console runs with (empty: none)
   std::string msuStatus;   // what became of the chosen pack, for the Audio page
+  std::wstring msuBase;    // its tracks' path without "-N.pcm" (empty: none in use)
   std::unique_ptr<Snes> snes;
   std::unique_ptr<SmasGame> game;
   Video video;

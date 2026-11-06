@@ -265,6 +265,8 @@ whether the pack was found and which patch it used.
     patch, which picks one of several versions of the music as you reach
     each new level (a new game starts with the usual one).
   - Music Pack Volume sets the pack's music against the game's sound effects.
+  - The Music Player plays the chosen pack's songs too (its Music option
+    switches between the pack and the original songs).
   - Save states remember the track playing. Load them with the same pack
     chosen as when they were made.
 

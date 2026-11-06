@@ -114,6 +114,7 @@ void App::applyMsu(std::vector<uint8_t>& rom) {
   makeDir(msuDir);
   msuLoaded = cfg.msuPack;
   msuStatus.clear();
+  msuBase.clear();
   if (cfg.msuPack.empty()) return;
   MsuPack pk;
   std::string err;
@@ -129,6 +130,7 @@ void App::applyMsu(std::vector<uint8_t>& rom) {
         snes->msu = std::make_unique<Msu1>();
         snes->msu->open(pk.base);
         snes->msu->setGain(cfg.msuVolume / 100.0f);
+        msuBase = pk.base;
         msuStatus = "Playing " + narrow(cfg.msuPack) + ": " + std::to_string(pk.tracks) + " tracks, patched with " +
                     narrow(pathName(pk.patch)) + ".";
         logf("MSU-1 pack %s: %d tracks, patch %s", narrow(cfg.msuPack).c_str(), pk.tracks,
@@ -153,6 +155,7 @@ void App::reloadForMsu() {
 // After the ROM is loaded (at start, or found later while the launcher shows).
 void App::romReady() {
   music.init(snes.get(), game.get(), &audio);
+  music.setMsu(msuBase, narrow(msuLoaded), cfg.msuVolume / 100.0f);  // (the Music Player plays the pack too)
   achNewRun(cfg.achievements);
   applyConfig();
   if (!test.on && test.runSeconds <= 0)
@@ -417,6 +420,7 @@ void App::applyConfig() {
   audio.setLatency(cfg.audioLatency);
   if (snes) snes->ppu.noSpriteLimit = cfg.noSpriteLimit;
   if (snes && snes->msu) snes->msu->setGain(cfg.msuVolume / 100.0f);
+  music.setMsuGain(cfg.msuVolume / 100.0f);
   if (game) {
     game->hudAnchor = cfg.hudAnchor;
     game->dimWrap = cfg.dimWrap;
