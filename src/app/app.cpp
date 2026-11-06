@@ -9,6 +9,7 @@
 #include <cstring>
 #include <ctime>
 #include <filesystem>
+#include "app/achexport.h"
 #include "app/msupack.h"
 #include "app/sys.h"
 #include "app/vkeys.h"
@@ -1072,6 +1073,23 @@ std::shared_ptr<MenuPage> App::pageAchievements() {
   p->rebuild = [this](MenuPage& pg) {
     pg.items.clear();
     pg.items.push_back(achievementsSwitch());
+    pg.items.push_back(MenuItem::action("Export to CSV", [this]() {
+      // (Windows / Linux: next to the settings; Android: where screenshots go, reachable over USB)
+      const std::wstring dir = pathJoin(pathDir(shotDir), L"achievements export");
+      std::string err;
+      if (!exportAchievements(dir, achStore, &err)) {
+        menu.notify("Export failed: " + err, 5.0f);
+        return;
+      }
+      logf("achievements exported to %s", narrow(dir).c_str());
+#ifdef __ANDROID__
+      menu.notify("Exported to Android/data/com.darhkfox.allstars/files/achievements export", 6.0f);
+#else
+      openFolder(dir);
+      menu.notify("Achievements exported: achievements.csv and icons", 4.0f);
+#endif
+    }, "Writes achievements.csv (ID, title, description, points, trophy, hidden, progress, unlocked and when, "
+       "icons) and an icons folder, earned and locked, for tools such as PlayniteAchievements' spreadsheet import."));
     // the running game's first
     GameId order[4] = {GameId::SMB1, GameId::SMBLL, GameId::SMB2, GameId::SMB3};
     GameId cur = inLauncher || !game ? Launcher::cardGame(launcher.card()) : game->current();

@@ -288,6 +288,14 @@ Fair play: while achievements are on, cheats, level select, fast forward and
 rewind are switched off. Turn achievements off under Options to use them.
 A run counts when the game is started from the launcher or with Reset Game.
 
+Export to CSV (in the Achievements list) writes an "achievements export"
+folder: achievements.csv (ID, title, description, points, trophy type,
+hidden, progress, unlocked and when, icon paths) and icons/ with each
+achievement's badge, earned and locked - ready for PlayniteAchievements'
+spreadsheet import. Windows: next to the exe; Steam Deck:
+~/.local/share/SuperMarioAllStars; Android: Android/data/
+com.darhkfox.allstars/files.
+
 
 =====================================================================
  TROUBLESHOOTING

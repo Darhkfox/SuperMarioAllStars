@@ -45,6 +45,7 @@ add_library(main SHARED
   ${SRC}/app/sys_posix.cpp
   ${SRC}/app/imageload.cpp
   ${SRC}/app/msupack.cpp
+  ${SRC}/app/achexport.cpp
   ${SRC}/platform/android/app_android.cpp
   ${SRC}/platform/android/video_gles.cpp
   ${SRC}/platform/android/audio_sdl.cpp

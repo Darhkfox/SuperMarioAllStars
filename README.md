@@ -291,6 +291,13 @@ In SMB1 co-op, Player Two counts when Luigi takes the axe or rides the flagpole 
 game's player, or kept aside and already on the pole as the flag scene starts), and Not a Scratch
 is lost when either player is hurt.
 
+
+**Export to CSV** (top of the Achievements list) writes an  folder:  in
+the columns PlayniteAchievements' spreadsheet import reads (ID, Title, Description, Points, Trophy Type, Hidden,
+Rarity, Category, Progress, Progress Total, Unlocked, Unlock Time, Unlocked Icon, Locked Icon) and  with
+each achievement's badge, earned and locked, drawn by the port (: a colour per game, a rim
+per trophy tier, a symbol per achievement). Points follow the tier: bronze 10, silver 25, gold 50, platinum 100.
+
 ## Frame pacing
 The games run at 60.1 frames per second. With VSync on, the frame loop waits on the display's
 vertical blank itself, so driver settings that force VSync off or use "Fast Sync" don't cause
