@@ -292,10 +292,10 @@ game's player, or kept aside and already on the pole as the flag scene starts), 
 is lost when either player is hurt.
 
 
-**Export to CSV** (top of the Achievements list) writes an  folder:  in
+**Export to CSV** (top of the Achievements list) writes an `achievements export` folder: `achievements.csv` in
 the columns PlayniteAchievements' spreadsheet import reads (ID, Title, Description, Points, Trophy Type, Hidden,
-Rarity, Category, Progress, Progress Total, Unlocked, Unlock Time, Unlocked Icon, Locked Icon) and  with
-each achievement's badge, earned and locked, drawn by the port (: a colour per game, a rim
+Rarity, Category, Progress, Progress Total, Unlocked, Unlock Time, Unlocked Icon, Locked Icon) and `icons/` with
+each achievement's badge, earned and locked, drawn by the port (`src/app/achexport.cpp`: a colour per game, a rim
 per trophy tier, a symbol per achievement). Points follow the tier: bronze 10, silver 25, gold 50, platinum 100.
 
 ## Frame pacing
