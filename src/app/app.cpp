@@ -17,7 +17,7 @@
 #include "core/png.h"
 
 const wchar_t* kAppTitle = L"Super Mario All-Stars";
-const char* kAppVersion = "1.1";
+const char* kAppVersion = "1.1.1";
 namespace {
 const char* kExpectedTitle = "SUPER MARIO ALL_STARS";
 constexpr uint32_t kKnownCrc = 0x925637c7;  // Super Mario All-Stars (USA)
