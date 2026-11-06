@@ -1274,6 +1274,24 @@ void Smb1Engine::onWrite(uint32_t adr, uint8_t v, uint32_t pc) {
         relSeq_ = ++drawSeq_;
         relBy_[a - 0x03ad] = curRel_;
         relByFrame_[a - 0x03ad] = snes_.frameCount() + 1;
+        relV_[a - 0x03ad] = v;
+        return;
+      }
+    }
+    // A position worked out this frame, moved a few px by the code about to
+    // draw from it, with another index in X: a fireball's explosion, 4 px left
+    // (03:F4B6, X its fireball number, not its object's). Its true place moves
+    // with it (else, past the 4:3 screen's right edge, the burst was drawn
+    // 256 px back, behind Mario).
+    if (relByFrame_[a - 0x03ad] == snes_.frameCount() + 1) {
+      const int d = (int8_t)(uint8_t)(v - relV_[a - 0x03ad]);
+      if (std::abs(d) <= 8) {
+        curRel_ = relBy_[a - 0x03ad] + d;
+        curWrites_ = 24;
+        relValid_ = true;
+        relSeq_ = ++drawSeq_;
+        relBy_[a - 0x03ad] = curRel_;
+        relV_[a - 0x03ad] = v;
         return;
       }
     }
