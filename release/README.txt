@@ -1,7 +1,7 @@
-SUPER MARIO ALL-STARS - PC, STEAM DECK & ANDROID PORT
+SUPER MARIO ALL-STARS - PC, STEAM DECK, MAC & ANDROID PORT
 Version 1.1.1
 
-A native Windows, Linux (Steam Deck) and Android version of Super Mario
+A native Windows, Linux (Steam Deck), macOS and Android version of Super Mario
 All-Stars (SNES), with true widescreen, simultaneous two-player co-op, a
 launcher, save states, rewind, achievements, cheats, level select, a sound test
 and a music player.
@@ -115,6 +115,30 @@ are).
 
 
 =====================================================================
+ MAC
+=====================================================================
+
+Requirements: macOS 11 Big Sur or later, on an Apple silicon or Intel Mac.
+
+1. Open SuperMarioAllStars-macOS.zip and move Super Mario All-Stars to your
+   Applications folder.
+2. Open it. The app isn't signed with an Apple developer account, so the
+   first time macOS says it can't check it for malware. On macOS 15 or later,
+   click Done, then System Settings > Privacy & Security > Open Anyway. On
+   macOS 11 to 14, right-click the app, choose Open, then Open again. You only
+   do this once.
+3. Click the "ROM not found" card and pick your
+   "Super Mario All-Stars (USA).sfc"; it is copied in, so you only do this
+   once. (Or drop the file on the window, or put it in a "roms" folder beside
+   the app.)
+
+Option+Return or Ctrl+Cmd+F switches between windowed and fullscreen. Saves,
+states and settings are kept in ~/Library/Application Support/
+SuperMarioAllStars. The slang shader presets work on the Mac too (your own
+go in a "shaders" folder there); High Frame Rate is Windows-only.
+
+
+=====================================================================
  CONTROLS
 =====================================================================
 
@@ -215,8 +239,10 @@ shown centred, as they were designed as a single screen.
                  frame insertion, high frame rate (100 Hz+ displays).
   Graphics       filters (sharp bilinear, CRT scanlines, aperture grille, LCD
                  grid, ...), screen curvature, sprite-limit removal.
-                 Windows: Slang Shader runs RetroArch slang presets from the
-                 "shaders" folder next to the exe (needs librashader.dll).
+                 Windows and Mac: Slang Shader runs RetroArch slang presets
+                 from the "shaders" folder next to the exe (needs
+                 librashader.dll; on the Mac it's in the app, and your own
+                 presets go in the data folder's "shaders").
                  Seven CRT presets come included: CRT Lottes, CRT Geom,
                  CRT Royale, CRT Easymode, CRT Aperture, zfast CRT and CRT Pi.
                  You can add more (e.g. the libretro slang-shaders collection)
@@ -276,6 +302,8 @@ Put each pack in its own folder inside the "msu" folder:
   Windows:    the "msu" folder next to SuperMarioAllStars.exe
               (Menu > Options > Audio > Open MSU-1 Folder opens it)
   Steam Deck: ~/.local/share/SuperMarioAllStars/msu
+  Mac:        ~/Library/Application Support/SuperMarioAllStars/msu
+              (Menu > Options > Audio > Open MSU-1 Folder opens it)
   Android:    Android/data/com.darhkfox.allstars/files/msu
               (copy it in from a PC over USB)
 
@@ -323,8 +351,8 @@ folder: achievements.csv (ID, title, description, points, trophy type,
 hidden, progress, unlocked and when, icon paths) and icons/ with each
 achievement's badge, earned and locked - ready for PlayniteAchievements'
 spreadsheet import. Windows: next to the exe; Steam Deck:
-~/.local/share/SuperMarioAllStars; Android: Android/data/
-com.darhkfox.allstars/files.
+~/.local/share/SuperMarioAllStars; Mac: ~/Library/Application Support/
+SuperMarioAllStars; Android: Android/data/com.darhkfox.allstars/files.
 
 
 =====================================================================
@@ -385,13 +413,13 @@ Super Mario All-Stars PC Port
   Patreon   patreon.com/c/TeamRedTail
 
 Third-party components:
-  SDL2 (Android and Linux builds) - Sam Lantinga and contributors, zlib licence.
+  SDL2 (Android, Linux and Mac builds) - Sam Lantinga and contributors, zlib licence.
   DejaVu Sans font (Linux build) - DejaVu fonts team, Bitstream Vera licence.
   Luckiest Guy font - Astigmatic, Apache License 2.0.
   stb_image (reading your cover pictures) - Sean Barrett, public domain / MIT.
   NES Brick Bounce - BMF54123's SMAS brick block fix (updated by Blittle
     McNilsen).
-  librashader (Windows slang shaders) - Mozilla Public License 2.0
+  librashader (Windows and Mac slang shaders) - Mozilla Public License 2.0
     (librashader-LICENSE.md; source: github.com/SnowflakePowered/librashader).
   Included slang shader presets, unmodified from the libretro slang-shaders
     collection (github.com/libretro/slang-shaders):

@@ -1,7 +1,8 @@
 // Super Mario All-Stars port: the application (launcher, game, menus,
 // achievements), the same on every platform. The platform's part (window,
-// main loop, video, sound, controllers) is in app_win.cpp (Windows) and
-// platform/android/app_android.cpp (Android).
+// main loop, video, sound, controllers) is in app_win.cpp (Windows),
+// platform/android/app_android.cpp (Android), platform/linux/app_linux.cpp
+// (desktop Linux) and platform/macos/app_macos.mm (macOS).
 #pragma once
 #include "app/updatecheck.h"
 #include <cstdint>
@@ -28,7 +29,11 @@
 #include "platform/android/audio_sdl.h"
 #include "platform/android/input_sdl.h"
 #include "platform/android/touch.h"
+#ifdef __APPLE__
+#include "platform/macos/video_metal.h"
+#else
 #include "platform/android/video_gles.h"
+#endif
 #endif
 
 extern const wchar_t* kAppTitle;
@@ -218,7 +223,7 @@ struct App {
   void applyLauncherArt(bool reload = false);  // the covers and background (see Launcher::setArt)
   // The slang shader preset in cfg.slangPreset loaded (or dropped) if it
   // isn't what the video layer has; force after the device was recreated.
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__APPLE__)
   void applySlang(bool force = false);
   std::wstring slangLoaded;  // the preset loaded now (full path; empty: none)
   std::shared_ptr<MenuPage> pageSlang();

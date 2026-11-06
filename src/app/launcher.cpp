@@ -779,9 +779,15 @@ void Launcher::draw(Menu& menu, int w, int h) {
     }
     bx += bws[i] + bgap;
   }
+#ifdef __APPLE__
+#define FULLSCREEN_HINT "Ctrl+Cmd+F Fullscreen"
+#else
+#define FULLSCREEN_HINT "F11 Fullscreen"
+#endif
   const std::string keys = !hint_.empty()  ? hint_
-                           : confirmRight_ ? "\xE2\x86\x90\xE2\x86\x92 Choose    Enter / (B) Play    F11 Fullscreen    Esc Quit"
-                                           : "\xE2\x86\x90\xE2\x86\x92 Choose    Enter / (A) Play    F11 Fullscreen    Esc Quit";
+                           : confirmRight_ ? "\xE2\x86\x90\xE2\x86\x92 Choose    Enter / (B) Play    " FULLSCREEN_HINT "    Esc Quit"
+                                           : "\xE2\x86\x90\xE2\x86\x92 Choose    Enter / (A) Play    " FULLSCREEN_HINT "    Esc Quit";
+#undef FULLSCREEN_HINT
   if (retro)
     menu.pixelText(Menu::widen(keys), rectF(0, H - lh(fSmall) * 1.6f, W, H - lh(fSmall) * 0.6f), fSmall * 0.78f,
                    argb(0xFFBCBCBC), kAlignCenter, kParaNear);
