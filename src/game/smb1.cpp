@@ -1394,6 +1394,7 @@ bool Smb1Engine::holdEnemy(int x) {
     fresh_ = 0;
     return false;
   }
+  if (x < 5 && leavesBuilt(x)) return true;
   if (x >= 10 || !(fresh_ & (1 << x))) return false;
   uint8_t flag = ram(0x10 + x), id = ram(0x1c + x);
   // (Koopas, Buzzy Beetles, Hammer Bros, Goombas, jumping Paratroopas, Spinies;
@@ -1404,6 +1405,23 @@ bool Smb1Engine::holdEnemy(int x) {
     fresh_ &= ~(1 << x);
     return false;
   }
+  return true;
+}
+
+// A kicked shell heading right out of view, past the built level: the wide
+// range keeps it further out than the 4:3 game would (which lets it go 72 px
+// past the screen, all built), into columns whose collision map is still the
+// level 512 px back, where it could meet walls that aren't there and come
+// back into view. It goes, as in the 4:3 game. (Not walkers: one turned by a
+// real wall off the view comes back, as on the console.)
+bool Smb1Engine::leavesBuilt(int x) {
+  uint8_t flag = ram(0x10 + x), id = ram(0x1c + x);
+  bool shell = id <= 0x03 && (ram(0x29 + x) & 0x80);  // (Koopas and Buzzy Beetles, kicked)
+  if (!flag || (flag & 0x80) || !shell || (int8_t)ram(0x5e + x) <= 0) return false;
+  int ex = (int8_t)ram(0x79 + x) * 256 + ram(0x021a + x);
+  if (ex + 16 <= parserPos() || ex - camera() < 256 + extR_) return false;
+  for (uint16_t a : {0x10, 0x1c, 0x29, 0x0110, 0x012e, 0x0792, 0x03a2}) snes_.wram[a + x] = 0;
+  snes_.wram[0x0257 + x] = 0x20;  // (as EraseEnemyObject)
   return true;
 }
 

@@ -596,7 +596,9 @@ void Menu::draw(int w, int h, float anim) {
   if (!help.empty())
     text(help, rectF(tx, fy + lhSmall * 0.35f, panel.right - pad, fy + lhSmall * 1.35f),
          fit(help, sizeSmall, false, inner), false, capturing ? withA(accent_, a) : rgb(kHint, a));
-  std::wstring keys = keysHint.empty() ? L"↑↓ Select      ←→ Change      Enter / Ⓐ Confirm      Esc / Ⓑ Back" : keysHint;
+  std::wstring keys = !keysHint.empty() ? keysHint
+                     : confirmRight     ? L"↑↓ Select      ←→ Change      Enter / Ⓑ Confirm      Esc / Ⓐ Back"
+                                        : L"↑↓ Select      ←→ Change      Enter / Ⓐ Confirm      Esc / Ⓑ Back";
   text(keys, rectF(tx, fy + lhSmall * 1.75f, panel.right - pad, fy + lhSmall * 2.75f),
        fit(keys, sizeSmall, false, inner), false, rgb(kKeys, a));
 }

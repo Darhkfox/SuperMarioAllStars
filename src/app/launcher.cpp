@@ -677,11 +677,17 @@ void Launcher::draw(Menu& menu, int w, int h) {
     bx += bws[i] + bgap;
   }
 #ifdef __APPLE__
-  const char* kHint = "\xE2\x86\x90\xE2\x86\x92 Choose    Enter / (A) Play    Ctrl+Cmd+F Fullscreen    Esc Quit";
+#define FULLSCREEN_HINT "Ctrl+Cmd+F Fullscreen"
 #else
-  const char* kHint = "\xE2\x86\x90\xE2\x86\x92 Choose    Enter / (A) Play    F11 Fullscreen    Esc Quit";
+#define FULLSCREEN_HINT "F11 Fullscreen"
 #endif
-  text(W * 0.5f, H - lh(fSmall) * 1.6f, hint_.empty() ? kHint : hint_, fSmall, false, argb(0xFFA3B0CC), 1);
+  text(W * 0.5f, H - lh(fSmall) * 1.6f,
+       !hint_.empty()  ? hint_
+       : confirmRight_ ? "\xE2\x86\x90\xE2\x86\x92 Choose    Enter / (B) Play    " FULLSCREEN_HINT "    Esc Quit"
+                       : "\xE2\x86\x90\xE2\x86\x92 Choose    Enter / (A) Play    " FULLSCREEN_HINT "    Esc Quit",
+       fSmall,
+       false, argb(0xFFA3B0CC), 1);
+#undef FULLSCREEN_HINT
 }
 
 bool Launcher::overLink(float x, float y) const {
