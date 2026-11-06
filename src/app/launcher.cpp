@@ -195,6 +195,8 @@ void Launcher::startPreview(int i) {
 
 void Launcher::stepPreview(Preview& p) {
   for (int k = 0; k < 2; k++) p.snes->input[k] = 0;
+  p.snes->apu.dsp.musicGain = musicGain_;
+  p.snes->apu.dsp.sfxGain = sfxGain_;
   p.game->beforeFrame();
   p.snes->runFrame();
   p.game->afterFrame();

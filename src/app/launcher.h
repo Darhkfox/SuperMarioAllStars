@@ -47,7 +47,8 @@ public:
   Action tap(float x, float y);
   bool overLink(float x, float y) const;  // (the logo and its page: a link)
   void setHint(const std::string& h) { hint_ = h; }  // the line along the bottom (empty: the keys')
-  void setConfirmRight(bool on) { confirmRight_ = on; }  // (the keys' line: the right face button plays)
+  void setConfirmRight(bool on) { confirmRight_ = on; }
+  void setGains(int music, int sfx) { musicGain_ = music, sfxGain_ = sfx; }  // (the previews' music / sound effects, 256 = as made)  // (the keys' line: the right face button plays)
   ColorF accent() const;
   static ColorF gameAccent(GameId g);
   void stopSound() { soundCard_ = -1; }
@@ -88,6 +89,7 @@ private:
   int soundCard_ = -1;
   std::string hint_;
   bool confirmRight_ = false;
+  int musicGain_ = 256, sfxGain_ = 256;
   std::vector<RectF> cardHits_, buttonHits_;  // (where the last draw put them)
   RectF linkHit_{};
   std::vector<int16_t> buf_;

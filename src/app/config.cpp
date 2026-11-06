@@ -262,6 +262,8 @@ bool Config::load(const std::wstring& path) {
   geti("audio.volume", volume, 0, 100);
   getb("audio.mute_unfocused", muteUnfocused);
   geti("audio.latency", audioLatency, 20, 200);
+  geti("audio.music_volume", musicVolume, 0, 100);
+  geti("audio.sfx_volume", sfxVolume, 0, 100);
   if (kv.count("audio.msu_pack")) msuPack = widen(kv["audio.msu_pack"]);
   geti("audio.msu_volume", msuVolume, 0, 100);
   geti("input.select_button", selectMode, 0, 1);
@@ -335,6 +337,8 @@ bool Config::save(const std::wstring& path) const {
   f << "volume=" << volume << "\n";
   f << "mute_unfocused=" << muteUnfocused << "\n";
   f << "latency=" << audioLatency << "\n";
+  f << "music_volume=" << musicVolume << "\n";
+  f << "sfx_volume=" << sfxVolume << "\n";
   f << "msu_pack=" << narrow(msuPack) << "\n";
   f << "msu_volume=" << msuVolume << "\n";
   f << "[interface]\n";

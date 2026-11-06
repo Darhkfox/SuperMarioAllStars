@@ -97,6 +97,8 @@ struct Config {
   int volume = 80;
   bool muteUnfocused = false;
   int audioLatency = 64;       // ms
+  int musicVolume = 100;       // the games' music, percent (0: off, the sound effects kept)
+  int sfxVolume = 100;         // ... and their sound effects
   std::wstring msuPack;        // an MSU-1 music pack: its folder in the msu folder, or empty (see app/msupack.h)
   int msuVolume = 100;         // its music's volume, percent
   int interpolation = 0;       // 0 = hardware gaussian

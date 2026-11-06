@@ -130,7 +130,7 @@ void App::applyMsu(std::vector<uint8_t>& rom) {
         rom.swap(patched);
         snes->msu = std::make_unique<Msu1>();
         snes->msu->open(pk.base);
-        snes->msu->setGain(cfg.msuVolume / 100.0f);
+        snes->msu->setGain(cfg.msuVolume / 100.0f * cfg.musicVolume / 100.0f);
         msuBase = pk.base;
         msuStatus = "Playing " + narrow(cfg.msuPack) + ": " + std::to_string(pk.tracks) + " tracks, patched with " +
                     narrow(pathName(pk.patch)) + ".";
@@ -423,7 +423,13 @@ void App::applyConfig() {
   menu.style = cfg.menuStyle;
   launcher.setConfirmRight(cfg.confirmRight);
   if (snes) snes->ppu.noSpriteLimit = cfg.noSpriteLimit;
-  if (snes && snes->msu) snes->msu->setGain(cfg.msuVolume / 100.0f);
+  if (snes) {
+    snes->apu.dsp.musicGain = cfg.musicVolume * 256 / 100;
+    snes->apu.dsp.sfxGain = cfg.sfxVolume * 256 / 100;
+  }
+  launcher.setGains(cfg.musicVolume * 256 / 100, cfg.sfxVolume * 256 / 100);
+  // (a music pack's songs are music too: its own volume, times the music's)
+  if (snes && snes->msu) snes->msu->setGain(cfg.msuVolume / 100.0f * cfg.musicVolume / 100.0f);
   music.setMsuGain(cfg.msuVolume / 100.0f);
   if (game) {
     game->hudAnchor = cfg.hudAnchor;
@@ -1424,6 +1430,19 @@ std::shared_ptr<MenuPage> App::pageAudio() {
                                           applyConfig();
                                         },
                                         "%"));
+    pg.items.push_back(MenuItem::slider("Music Volume", 0, 100, 5, [this]() { return cfg.musicVolume; },
+                                        [this](int v) {
+                                          cfg.musicVolume = v;
+                                          applyConfig();
+                                        },
+                                        "%", "The games' music (and a music pack's). 0% turns the music off and keeps "
+                                             "the sound effects."));
+    pg.items.push_back(MenuItem::slider("Sound Effects Volume", 0, 100, 5, [this]() { return cfg.sfxVolume; },
+                                        [this](int v) {
+                                          cfg.sfxVolume = v;
+                                          applyConfig();
+                                        },
+                                        "%", "Jumps, coins, stomps and the rest. 0% turns them off and keeps the music."));
     pg.items.push_back(MenuItem::slider("Latency", 20, 160, 10, [this]() { return cfg.audioLatency; },
                                         [this](int v) {
                                           cfg.audioLatency = v;
