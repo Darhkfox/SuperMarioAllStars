@@ -38,7 +38,9 @@ public:
   void selectGame(GameId g);
   // Emulates `frames` frames of each preview (and, while they start, as much
   // as a few milliseconds allow); the chosen card's sound when `sound`.
-  void runPreviews(int frames, bool sound, Audio& audio);
+  // `refreshHz`: the display's; the cards not chosen get a share of each
+  // refresh's time (0: no limit), the launcher kept smooth on slow devices.
+  void runPreviews(int frames, bool sound, Audio& audio, double refreshHz = 0);
   void draw(Menu& menu, int w, int h);
   // Touch (and the mouse): a card tapped is chosen, tapped again played; a
   // button tapped is used; the logo or the Patreon page under it opens it.
@@ -57,7 +59,10 @@ private:
     int bootFrames = 0;
     float shown = 0;  // fade-in
     int image = 0, imageH = 0;  // (made on the canvas of imageEpoch_)
+    bool fresh = false;         // a new picture drawn since the image was last updated
+    int owed = 0;               // (a card not chosen: frames still to run, see runPreviews)
   };
+  int drawTurn_ = 0;  // (whose turn it is of the cards not chosen to draw a picture: see runPreviews)
   Preview prev_[kCards + 1];
   bool haveRom_ = false, exact_ = true;
   std::string romName_, version_ = "1.0";

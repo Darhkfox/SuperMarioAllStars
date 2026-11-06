@@ -54,7 +54,9 @@ android {
     buildTypes {
         release {
             minifyEnabled false
-            if (keystoreFile.exists()) signingConfig signingConfigs.release
+            // (without the release keystore: the debug key, as the debug builds, so it
+            // installs and updates over them; the native code optimised either way)
+            signingConfig keystoreFile.exists() ? signingConfigs.release : signingConfigs.debug
         }
     }
 

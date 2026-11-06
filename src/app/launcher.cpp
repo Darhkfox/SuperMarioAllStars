@@ -144,7 +144,7 @@ void Launcher::stepPreview(Preview& p) {
   p.snes->takeAudio(buf_);
 }
 
-void Launcher::runPreviews(int frames, bool sound, Audio& audio) {
+void Launcher::runPreviews(int frames, bool sound, Audio& audio, double refreshHz) {
   // Starting: through the game select out of sight, the chosen card's first,
   // a few milliseconds of it per refresh.
   using clock = std::chrono::steady_clock;
@@ -172,15 +172,48 @@ void Launcher::runPreviews(int frames, bool sound, Audio& audio) {
     audio.flush();
     soundCard_ = want;
   }
-  for (int i : cards_) {
-    Preview& p = prev_[i];
-    if (!p.snes || !p.ready) continue;
+  // Four consoles drawing every frame made the launcher slow (144 Hz
+  // displays, phones). Drawing a picture is most of a frame's work: the
+  // chosen card runs and draws every frame, with its sound; the others run
+  // their frames (only the last of them drawn, and only one card's picture
+  // a frame, in turn: small on screen, a few times a second is plenty)
+  // within a share of the refresh's time. On a fast computer they keep up;
+  // on a slow device they fall behind a little rather than the launcher.
+  const int chosen = N > 0 ? cards_[(sel_ < N ? sel_ : lastCard_) % N] : -1;
+  int others[kCards + 1], nOthers = 0;
+  for (int i : cards_)
+    if (i != chosen && prev_[i].snes && prev_[i].ready) others[nOthers++] = i;
+  const int turn = frames > 0 && nOthers > 0 ? others[drawTurn_ % nOthers] : -1;
+  if (frames > 0) drawTurn_++;
+  if (chosen >= 0 && prev_[chosen].snes && prev_[chosen].ready) {
+    Preview& p = prev_[chosen];
+    p.owed = 0;
     for (int f = 0; f < frames; f++) {
+      const bool draw = f == frames - 1;
+      p.snes->ppu.skipRender = !draw;
       stepPreview(p);
-      if (i == soundCard_ && !buf_.empty()) {
+      if (draw) p.fresh = true;
+      if (chosen == soundCard_ && !buf_.empty()) {
         for (int16_t& s : buf_) s = (int16_t)(s * 0.55f);  // (quieter than the game)
         audio.push(buf_.data(), buf_.size() / 2, Snes::kSampleRate);
       }
+    }
+  }
+  const auto budget = std::chrono::microseconds(refreshHz > 0 ? (int)(0.35e6 / refreshHz) : 1 << 30);
+  const auto from = clock::now();
+  for (int n = 0; n < nOthers; n++) {
+    Preview& p = prev_[others[n]];
+    p.owed = std::min(p.owed + frames, 3);  // (fallen further behind: it just runs slower)
+  }
+  for (int n = 0; n < nOthers; n++) {
+    const int i = others[(drawTurn_ + n) % nOthers];
+    Preview& p = prev_[i];
+    while (p.owed > 0 && clock::now() - from < budget) {
+      const bool draw = p.owed == 1 && i == turn;
+      p.snes->ppu.skipRender = !draw;
+      stepPreview(p);
+      p.owed--;
+      if (draw) p.fresh = true;
     }
   }
 }
@@ -457,9 +490,12 @@ void Launcher::draw(Menu& menu, int w, int h) {
       if (!pv.image) {
         pv.image = cv->makeImage(256, fh);
         pv.imageH = fh;
+        pv.fresh = true;
       }
       if (pv.image) {
-        cv->updateImage(pv.image, pv.snes->ppu.frame + kMaxExt, kLineW);
+        // (only a picture drawn since: the others are as they were)
+        if (pv.fresh) cv->updateImage(pv.image, pv.snes->ppu.frame + kMaxExt, kLineW);
+        pv.fresh = false;
         // (whole multiples of the picture stay sharp; in between, smooth)
         float scale = (pr.bottom - pr.top) / fh;
         cv->drawImage(pv.image, pr, pv.shown, scale < 2.0f);

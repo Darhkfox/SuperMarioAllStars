@@ -222,7 +222,7 @@ void App::frameLauncher(double dt, int gameFrames) {
   if (menuOpen && !menu.open()) cfg.save(configPath);
   if (snes) music.update(dt, menu.open());
   // (the chosen card's sound, not under a menu page: the music player's there)
-  launcher.runPreviews(gameFrames, !menu.open() && !(cfg.muteUnfocused && !focused), audio);
+  launcher.runPreviews(gameFrames, !menu.open() && !(cfg.muteUnfocused && !focused), audio, pacing.hz);
 }
 
 // Black frame insertion's state, beside its switch.
