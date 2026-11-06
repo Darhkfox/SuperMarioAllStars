@@ -839,7 +839,8 @@ std::shared_ptr<MenuPage> App::pageOptions() {
                                          "Filters, CRT effects and sprite options."));
     pg.items.push_back(MenuItem::submenu("Colour", [this]() { menu.push(pageColor()); },
                                          "Colour profiles, picture adjustments and accessibility filters."));
-    pg.items.push_back(MenuItem::submenu("Audio", [this]() { menu.push(pageAudio()); }, "Volume and latency."));
+    pg.items.push_back(MenuItem::submenu("Audio", [this]() { menu.push(pageAudio()); },
+                                         "Volume, latency and custom soundtracks (MSU-1 music packs)."));
     pg.items.push_back(MenuItem::submenu("Controls", [this]() { menu.push(pageControls()); },
                                          "Keyboard and joypad bindings for both players."));
     pg.items.push_back(MenuItem::header("Launcher"));
@@ -1397,7 +1398,9 @@ std::shared_ptr<MenuPage> App::pageAudio() {
     for (const auto& n : *packs) names.push_back(narrow(n));
     std::string help;
     if (!cfg.msuPack.empty() && cfg.msuPack == msuLoaded && !msuStatus.empty()) help = msuStatus + " ";
-    else if (cfg.msuPack != msuLoaded) help = "Starts when you next start a game. ";
+    else if (cfg.msuPack != msuLoaded)
+      help = inLauncher ? "Starts when you next start a game. "
+                        : "Choose Restart With This Pack below to hear it now (or it starts with your next game). ";
     help += packs->empty() ? "Put a pack in its own folder in the msu folder: its MSU-1 patch (.bps or .ips) and "
                              "its tracks (.pcm), then come back here."
                            : "A pack is a folder in the msu folder: its MSU-1 patch (.bps or .ips) and tracks (.pcm).";
@@ -1418,6 +1421,13 @@ std::shared_ptr<MenuPage> App::pageAudio() {
           menu.refresh();  // (its help says what became of it)
         },
         help));
+    if (!inLauncher && snes && cfg.msuPack != msuLoaded) {
+      // (in a game: the console is rebuilt with the pack, so the game starts again)
+      pg.items.push_back(MenuItem::action("Restart With This Pack", [this]() {
+        menu.confirm("Restart the game with this music?", [this]() { launchGame(playing); },
+                     "The game starts again from its title. Progress since your last save is lost.");
+      }, "Starts the game again from its title with the chosen music pack (or none)."));
+    }
     pg.items.push_back(MenuItem::slider("Music Pack Volume", 0, 100, 5, [this]() { return cfg.msuVolume; },
                                         [this](int v) {
                                           cfg.msuVolume = v;

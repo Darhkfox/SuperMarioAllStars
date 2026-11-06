@@ -250,8 +250,9 @@ Put each pack in its own folder inside the "msu" folder:
       sma_msu1-2.pcm
       ...
 
-Then choose it under Menu > Options > Audio > Music Pack. It starts the next
-time a game is started from the launcher. The line under the option says
+Then choose it under Options > Audio > Music Pack (on the launcher, or in
+the game's menu). From the launcher it starts with the next game; in a game,
+Restart With This Pack starts the game again with it. The line under the option says
 whether the pack was found and which patch it used.
 
   - Don't patch your ROM file yourself: the port applies the pack's patch as
