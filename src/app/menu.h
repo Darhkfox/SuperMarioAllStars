@@ -122,6 +122,14 @@ public:
   void outlineRound(RectF r, float radius, float width, ColorF c);
   Canvas* canvas() const { return cv_; }
   float uiScale() const { return scale_; }
+  // (Retro: text in the 5x7 pixel font, upper case)
+  void pixelText(const std::wstring& s, RectF r, float size, ColorF c, TextAlign align, ParaAlign palign);
+  float pixelMeasure(const std::wstring& s, float size);
+  // A title or heading in the style's display face (Luckiest Guy, outlined; or pixels).
+  void displayText(const std::wstring& s, RectF r, float size, ColorF fill, ColorF edge, float edgeW,
+                   TextAlign align = kAlignLeading);
+  float displayMeasure(const std::wstring& s, float size);
+  void star(float cx, float cy, float r, ColorF fill, ColorF edge, float edgeW) { drawStar(cx, cy, r, fill, edge, edgeW); }
   ColorF accent() const { return accent_; }
   static std::wstring widen(const std::string& s);
 
@@ -151,13 +159,6 @@ private:
   void drawToasts(int w, int h, float s);
   void drawBanner(int w, int h, float s);
   void drawStar(float cx, float cy, float r, ColorF fill, ColorF edge, float edgeW);
-  // (Retro: text in the 5x7 pixel font, upper case)
-  void pixelText(const std::wstring& s, RectF r, float size, ColorF c, TextAlign align, ParaAlign palign);
-  float pixelMeasure(const std::wstring& s, float size);
-  // A page title or heading in the style's display face (Luckiest Guy, outlined; or pixels).
-  void displayText(const std::wstring& s, RectF r, float size, ColorF fill, ColorF edge, float edgeW,
-                   TextAlign align = kAlignLeading);
-  float displayMeasure(const std::wstring& s, float size);
   void drawHeaderArt(RectF r, float a);  // (Themed Dark: the game's pattern behind the title)
   void drawBricks(RectF r, ColorF brick, ColorF mortar, float bh, float a);
   void activate(MenuItem& it);
