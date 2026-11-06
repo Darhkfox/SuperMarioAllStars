@@ -695,7 +695,10 @@ void Menu::draw(int w, int h, float anim) {
   y += pad * 0.45f;
 
   // The list (beside a custom panel on pages that have one)
-  const float row = lhBody * 1.32f, footerH = lhSmall * 3.2f + (retro ? H * 0.04f : 0.0f);
+  // (the footer: the selected row's description, wrapped onto up to three lines
+  // at a readable size rather than shrunk onto one, then the keys)
+  const float sizeHelp = 22 * s, lhHelp = sizeHelp * kLine;
+  const float row = lhBody * 1.32f, footerH = lhHelp * 3.1f + lhSmall * 1.75f + (retro ? H * 0.04f : 0.0f);
   const float listTop = y, listBottom = panel.bottom - footerH - pad * 0.5f;
   const float listW = inner * p->listFraction;
   const float vx = tx + listW;  // values end here
@@ -901,15 +904,31 @@ void Menu::draw(int w, int h, float anim) {
   std::wstring help;
   if (capturing) help = widen(captureText);
   else if (n > 0 && p->sel < n && selectable(p->items[p->sel])) help = widen(p->items[p->sel].help);
-  if (!help.empty())
-    text(help, rectF(tx, fy + lhSmall * 0.35f, panel.right - pad, fy + lhSmall * 1.35f),
-         fit(help, sizeSmall, false, inner), false,
-         capturing ? (retro ? rgb(kRetroGold, a) : withA(accent_, a)) : rgb(L.hint, a));
+  if (!help.empty()) {
+    // words onto lines no wider than the panel; a fourth line's worth goes on the third, shrunk to fit
+    std::vector<std::wstring> lines(1);
+    size_t at = 0;
+    while (at < help.size()) {
+      size_t sp = help.find(L' ', at);
+      std::wstring word = help.substr(at, sp == std::wstring::npos ? std::wstring::npos : sp - at);
+      at = sp == std::wstring::npos ? help.size() : sp + 1;
+      if (word.empty()) continue;
+      std::wstring tryLine = lines.back().empty() ? word : lines.back() + L" " + word;
+      if (lines.size() < 3 && !lines.back().empty() && measure(tryLine, sizeHelp, false) > inner) lines.push_back(word);
+      else lines.back() = tryLine;
+    }
+    const ColorF hc = capturing ? (retro ? rgb(kRetroGold, a) : withA(accent_, a)) : rgb(L.hint, a);
+    float ly = fy + lhHelp * 0.2f;
+    for (const std::wstring& l : lines) {
+      text(l, rectF(tx, ly, panel.right - pad, ly + lhHelp), fit(l, sizeHelp, false, inner), false, hc);
+      ly += lhHelp * 0.95f;
+    }
+  }
   std::wstring keys = !keysHint.empty() ? keysHint
                      : confirmRight     ? L"↑↓ Select      ←→ Change      Enter / Ⓑ Confirm      Esc / Ⓐ Back"
                                         : L"↑↓ Select      ←→ Change      Enter / Ⓐ Confirm      Esc / Ⓑ Back";
-  text(keys, rectF(tx, fy + lhSmall * 1.75f, panel.right - pad, fy + lhSmall * 2.75f),
-       fit(keys, sizeSmall, false, inner), false, rgb(L.keys, a));
+  const float ky = panel.bottom - lhSmall * 1.45f - (retro ? H * 0.04f : 0.0f);
+  text(keys, rectF(tx, ky, panel.right - pad, ky + lhSmall), fit(keys, sizeSmall, false, inner), false, rgb(L.keys, a));
 }
 
 // A tap: the close button backs out; a row is chosen and used (a slider

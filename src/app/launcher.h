@@ -75,7 +75,7 @@ private:
   int drawTurn_ = 0;  // (whose turn it is of the cards not chosen to draw a picture: see runPreviews)
   Preview prev_[kCards + 1];
   bool haveRom_ = false, exact_ = true;
-  std::string romName_, version_ = "1.0";
+  std::string romName_, version_ = "1.1";
   double par_ = 8.0 / 7.0;
   std::vector<int> cards_ = {0, 1, 2, 3};  // the cards shown
   const std::vector<uint8_t>* rom_ = nullptr;
@@ -107,7 +107,7 @@ private:
   };
   Art cover_[kCards + 1], bgArt_;
   std::wstring artDir_;
-  bool useCovers_ = false, useBg_ = false, coverFill_ = true;
+  bool useCovers_ = false, useBg_ = false, coverFill_ = false;
   void readArt(Art& a, const char* name);
   int artImage(Canvas* cv, Art& a);
   void freeArt();
