@@ -326,6 +326,18 @@ static void execLine(const std::string& line) {
       printf("subdiff f%d %d\n", (int)s.frameCount(), d);
     }
     last.assign(pp.frame, pp.frame + n);
+  } else if (cmd == "msu") {
+    // msu BASE: an MSU-1 music pack attached (BASE: its files' path without "-N.pcm" / ".msu"); "msu" alone: none
+    std::string b;
+    ss >> b;
+    if (b.empty()) {
+      s.msu.reset();
+    } else {
+      s.msu = std::make_unique<Msu1>();
+      s.msu->open(std::wstring(b.begin(), b.end()));
+    }
+  } else if (cmd == "msustat") {
+    printf("msu %s track=%d playing=%d\n", s.msu ? "on" : "off", s.msu ? s.msu->track() : -1, s.msu && s.msu->playing());
   } else if (cmd == "skiprender") {
     // skiprender 0|1: no pixels drawn (as a launcher preview boots)
     int v = 1;

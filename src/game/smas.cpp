@@ -444,7 +444,7 @@ void SmasGame::onStateLoaded() {
   std::vector<uint8_t> x;
   x.swap(pendingExt_);
   bool loaded[2] = {};
-  bool achLoaded = false;
+  bool achLoaded = false, msuLoaded = false;
   [&] {
     const uint8_t* p = x.data();
     const uint8_t* end = p + x.size();
@@ -458,7 +458,7 @@ void SmasGame::onStateLoaded() {
     // from older states.)
     // (... and the achievement run: absent from older states, which then
     // don't count.)
-    for (int g = 0; g < 5; g++) {
+    for (int g = 0; g < 6; g++) {
       uint32_t n = 0;
       if (end - p < 4) return;
       std::memcpy(&n, p, 4);
@@ -466,11 +466,14 @@ void SmasGame::onStateLoaded() {
       if ((size_t)(end - p) < n) return;
       if (g < 2) loaded[g] = g == 0 ? smb2_->loadExt(p, n) : smb3_->loadExt(p, n, version);
       else if (g == 4) achLoaded = (ach_.load(p, n), true);
-      else if (Smb1Engine* e = g == 2 ? smb1_.get() : smbll_.get()) e->loadExt(p, n, e == engine());
+      else if (g == 5) {  // (MSU-1's track and place: a later addition)
+        if (snes_.msu) snes_.msu->loadState(p, n), msuLoaded = true;
+      } else if (Smb1Engine* e = g == 2 ? smb1_.get() : smbll_.get()) e->loadExt(p, n, e == engine());
       p += n;
     }
   }();
   if (!achLoaded) ach_.load(nullptr, 0);
+  if (!msuLoaded && snes_.msu) snes_.msu->loadState(nullptr, 0);  // (a state from before: its own music, not the pack's)
   if (!loaded[0]) smb2_->assumeNarrowState();
   if (!loaded[1]) smb3_->assumeNarrowState();
 }
@@ -479,11 +482,14 @@ std::vector<uint8_t> SmasGame::saveExt() const {
   std::vector<uint8_t> out(5);
   std::memcpy(out.data(), &kExtMagic, 4);
   out[4] = kExtVersion;
-  for (int g = 0; g < 5; g++) {
+  for (int g = 0; g < 6; g++) {
     std::vector<uint8_t> b;
     if (g == 0) smb2_->saveExt(b);
     else if (g == 1) smb3_->saveExt(b);
     else if (g == 4) b = ach_.save();
+    else if (g == 5) {
+      if (snes_.msu) b = snes_.msu->saveState();
+    }
     else if (Smb1Engine* e = g == 2 ? smb1_.get() : smbll_.get()) e->saveExt(b);
     uint32_t n = (uint32_t)b.size();
     const uint8_t* np = (const uint8_t*)&n;

@@ -193,7 +193,7 @@ What each page holds:
   colour temperature, colour-vision assist (protanopia / deuteranopia / tritanopia), and
   Mario's Colours / Luigi's Colours: alternate outfits for each brother (Super Mario Bros. and The
   Lost Levels), kept by each in co-op whichever is the game's player.
-* **Audio** — volume, latency, mute when unfocused.
+* **Audio** — volume, latency, mute when unfocused, and **Music Pack**: an MSU-1 custom soundtrack (see below).
 * **Credits** — where to find the author (YouTube, Reddit, GitHub; each opens in your browser).
 * **CO-OP GAME on the title screens** of Super Mario Bros., The Lost Levels and Super Mario Bros. 3:
   a third choice under 1 PLAYER GAME / 2 PLAYER GAME (MARIO GAME / LUIGI GAME; in SMB3 a fourth,
@@ -247,6 +247,21 @@ What each page holds:
   down on the console's own clock, so with co-op on (SMB1, The Lost Levels, SMB3) the emulated
   CPU runs at twice its speed (`Snes::setCpuFast`); the PPU, DMA and sound chip keep their timing.
   One-player games keep the console's timing exactly.
+
+## Custom soundtracks (MSU-1)
+
+The port plays MSU-1 music packs, the CD-quality soundtracks made for flash carts and emulators. None are included.
+Put each pack in its own folder in the `msu` folder (Windows: next to the exe; Steam Deck:
+`~/.local/share/SuperMarioAllStars/msu`; Android: `Android/data/com.darhkfox.allstars/files/msu`), with its
+MSU-1 patch (`.bps` or `.ips`, for the USA ROM without a copier header) and its tracks (`NAME-1.pcm`, `NAME-2.pcm`,
+...), then choose it under Options > Audio > Music Pack. A pack without a patch can use one put in the `msu` folder
+itself.
+
+The patch is applied to the console's copy of the ROM as it loads (the file is never changed; the launcher's
+previews run it unpatched), and `src/core/msu1.cpp` emulates the chip: its registers at `$2000-$2007`, the tracks
+streamed from disk and resampled from 44.1 kHz into the console's 32 kHz sound. The track and its place are kept in
+save states. Both the standard patch (each song replaced) and the Super Mario All-Stars Deluxe patch (one of several
+versions of the music picked at each new level) work as they do on hardware.
 
 ## Achievements
 82 achievements: 20 for Super Mario Bros., 19 for The Lost Levels, 20 for SMB2, 21 for SMB3,

@@ -96,6 +96,8 @@ struct Config {
   int volume = 80;
   bool muteUnfocused = false;
   int audioLatency = 64;       // ms
+  std::wstring msuPack;        // an MSU-1 music pack: its folder in the msu folder, or empty (see app/msupack.h)
+  int msuVolume = 100;         // its music's volume, percent
   int interpolation = 0;       // 0 = hardware gaussian
   // Input
   int selectMode = 0;          // 0 = Select opens the menu, 1 = tap: game Select / hold: menu

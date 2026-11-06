@@ -21,6 +21,7 @@ set(CORE_SOURCES
   src/core/png.cpp
   src/core/fileio.cpp
   src/core/rewind.cpp
+  src/core/msu1.cpp
   src/game/achievements.cpp
   src/game/smas.cpp
   src/game/smb1.cpp
@@ -56,6 +57,7 @@ add_executable(SuperMarioAllStars WIN32
   src/app/music.cpp
   src/app/slang.cpp
   src/app/imageload.cpp
+  src/app/msupack.cpp
   src/app/app.rc
 )
 target_include_directories(SuperMarioAllStars PRIVATE third_party/stb)
@@ -92,6 +94,7 @@ elseif(UNIX AND NOT ANDROID)
     src/app/utf8.cpp
     src/app/sys_posix.cpp
     src/app/imageload.cpp
+    src/app/msupack.cpp
     src/platform/android/video_gles.cpp
     src/platform/android/audio_sdl.cpp
     src/platform/android/input_sdl.cpp

@@ -223,6 +223,49 @@ shown centred, as they were designed as a single screen.
                  A card without a cover keeps its live preview. Covers also
                  make the launcher lighter on slow devices (no preview runs
                  for a card with a cover).
+  Audio          volume, latency, and Music Pack (custom soundtracks, below).
+
+
+=====================================================================
+ CUSTOM SOUNDTRACKS (MSU-1)
+=====================================================================
+
+The port plays MSU-1 music packs: CD-quality replacement music made for
+real-hardware flash carts and emulators. None are included. A pack is two
+things, often downloaded separately:
+  - an MSU-1 patch for Super Mario All-Stars (.bps or .ips), and
+  - its music tracks (files named like sma_msu1-1.pcm, sma_msu1-2.pcm, ...).
+
+Put each pack in its own folder inside the "msu" folder:
+  Windows:    the "msu" folder next to SuperMarioAllStars.exe
+              (Menu > Options > Audio > Open MSU-1 Folder opens it)
+  Steam Deck: ~/.local/share/SuperMarioAllStars/msu
+  Android:    Android/data/com.darhkfox.allstars/files/msu
+              (copy it in from a PC over USB)
+
+  msu/
+    Deluxe/
+      sma_msu1.bps
+      sma_msu1-1.pcm
+      sma_msu1-2.pcm
+      ...
+
+Then choose it under Menu > Options > Audio > Music Pack. It starts the next
+time a game is started from the launcher. The line under the option says
+whether the pack was found and which patch it used.
+
+  - Don't patch your ROM file yourself: the port applies the pack's patch as
+    it loads the ROM and never changes the file. The patch must be for the
+    USA ROM without a copier header (the usual "sfc" patch).
+  - A pack that came without a patch: put the patch in the same folder as
+    its tracks, or once in the "msu" folder itself for all packs.
+  - Tracks a pack doesn't have play the game's own music.
+  - Super Mario All-Stars Deluxe (the pack with extra tracks) needs its own
+    patch, which picks one of several versions of the music as you reach
+    each new level (a new game starts with the usual one).
+  - Music Pack Volume sets the pack's music against the game's sound effects.
+  - Save states remember the track playing. Load them with the same pack
+    chosen as when they were made.
 
 
 =====================================================================

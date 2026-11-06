@@ -83,6 +83,17 @@ bool listFiles(const std::wstring& dir, std::vector<std::wstring>& names) {
   return true;
 }
 
+bool listDirs(const std::wstring& dir, std::vector<std::wstring>& names) {
+  WIN32_FIND_DATAW fd;
+  HANDLE h = FindFirstFileW(pathJoin(dir, L"*").c_str(), &fd);
+  if (h == INVALID_HANDLE_VALUE) return false;
+  do {
+    if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && fd.cFileName[0] != L'.') names.push_back(fd.cFileName);
+  } while (FindNextFileW(h, &fd));
+  FindClose(h);
+  return true;
+}
+
 std::string timeText(const char* fmt) {
   time_t t = time(nullptr);
   tm lt;

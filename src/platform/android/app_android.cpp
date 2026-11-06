@@ -189,6 +189,7 @@ bool App::init() {
   saveDir = pathJoin(exeDir, L"saves");
   const char* external = SDL_AndroidGetExternalStoragePath();
   shotDir = pathJoin(external ? widenUtf8(external) : exeDir, L"screenshots");
+  msuDir = pathJoin(external ? widenUtf8(external) : exeDir, L"msu");  // (MSU-1 packs: copied in over USB)
   makeDir(saveDir);
   makeDir(pathJoin(exeDir, L"roms"));
   if (!cfg.load(configPath)) cfg.save(configPath);

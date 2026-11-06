@@ -41,6 +41,9 @@ struct App {
   bool focused = true;
   Config cfg;
   std::wstring exeDir, configPath, saveDir, shotDir, romPath;
+  std::wstring msuDir;     // MSU-1 music packs (see app/msupack.h); exeDir/msu unless the platform says
+  std::wstring msuLoaded;  // the pack the console runs with (empty: none)
+  std::string msuStatus;   // what became of the chosen pack, for the Audio page
   std::unique_ptr<Snes> snes;
   std::unique_ptr<SmasGame> game;
   Video video;
@@ -195,6 +198,8 @@ struct App {
   void pollRom(double dt);            // looks for the ROM again while it is missing
   void launchGame(GameId g);
   void returnToLauncher();
+  void applyMsu(std::vector<uint8_t>& rom);  // (loadRom: the chosen pack's patch and chip)
+  void reloadForMsu();                        // the chosen pack changed: the ROM again, outside a game
   void frameLauncher(double dt, int gameFrames);
   std::string blackFramesNote() const;
   void applyDisplayMode();
