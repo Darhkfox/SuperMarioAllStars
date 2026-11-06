@@ -117,7 +117,8 @@ controller keeps its pad number while others are plugged in or out, and gets it 
 reconnects, so the players never swap controllers. Select opens
 the menu and backs out of it. The games only need their own Select button for the All-Stars save
 menu (pause, then Select). If you'd rather have it on Select, set *Controls → Select Button* to
-"Tap: Game Select - Hold: Menu".
+"Tap: Game Select - Hold: Menu". In the menus and the launcher the pad's bottom face button confirms
+and the right one goes back; *Controls → Menu Buttons → Right Confirms* swaps them (Nintendo's layout).
 
 ## Menu
 The pause menu is a dark panel over the dimmed game, tinted in the running game's colour (red

@@ -265,6 +265,7 @@ bool Config::load(const std::wstring& path) {
   if (kv.count("audio.msu_pack")) msuPack = widen(kv["audio.msu_pack"]);
   geti("audio.msu_volume", msuVolume, 0, 100);
   geti("input.select_button", selectMode, 0, 1);
+  getb("input.menu_confirm_right", confirmRight);
   geti("input.deadzone", deadzone, 5, 90);
   geti("input.touch_mode", touchMode, 0, 2);
   geti("input.touch_opacity", touchOpacity, 10, 100);
@@ -337,6 +338,7 @@ bool Config::save(const std::wstring& path) const {
   f << "msu_volume=" << msuVolume << "\n";
   f << "[input]\n";
   f << "select_button=" << selectMode << "\n";
+  f << "menu_confirm_right=" << confirmRight << "\n";
   f << "deadzone=" << deadzone << "\n";
   f << "touch_mode=" << touchMode << "\n";
   f << "touch_opacity=" << touchOpacity << "\n";

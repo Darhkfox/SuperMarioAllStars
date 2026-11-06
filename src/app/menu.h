@@ -82,6 +82,7 @@ public:
   // Touch screens: a close button on the panel, and taps and drags on its rows.
   bool touchUi = false;
   std::wstring keysHint;  // the footer's key line (empty: the keyboard and pad's)
+  bool confirmRight = false;  // (the pad's right face button confirms: the footer says so)
   void tap(float x, float y);
   void drag(float dy);
   std::string captureText;

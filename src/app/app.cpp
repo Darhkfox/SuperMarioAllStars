@@ -418,6 +418,8 @@ void App::applyConfig() {
   applyLauncherArt();
   audio.setVolume(cfg.volume / 100.0f);
   audio.setLatency(cfg.audioLatency);
+  menu.confirmRight = cfg.confirmRight;
+  launcher.setConfirmRight(cfg.confirmRight);
   if (snes) snes->ppu.noSpriteLimit = cfg.noSpriteLimit;
   if (snes && snes->msu) snes->msu->setGain(cfg.msuVolume / 100.0f);
   music.setMsuGain(cfg.msuVolume / 100.0f);
@@ -637,8 +639,10 @@ MenuInput App::menuInput() {
     nav[1] |= p->buttons[11] || p->axes[1] > dz;
     nav[2] |= p->buttons[12] || p->axes[0] < -dz;
     nav[3] |= p->buttons[13] || p->axes[0] > dz;
-    nav[4] |= p->buttons[0] || p->buttons[7];
-    nav[5] |= p->buttons[1] || p->buttons[6];
+    // (face buttons by position: 0 bottom, 1 right; Menu Buttons picks which confirms)
+    const int ok = cfg.confirmRight ? 1 : 0;
+    nav[4] |= p->buttons[ok] || p->buttons[7];
+    nav[5] |= p->buttons[1 - ok] || p->buttons[6];
     nav[6] |= p->buttons[4];
     nav[7] |= p->buttons[5];
   }
@@ -1484,6 +1488,15 @@ std::shared_ptr<MenuPage> App::pageControls() {
                                         [this](int v) { cfg.selectMode = v; },
                                         "Opens Menu: Select brings up this menu; the game's own Select is on the "
                                         "left stick button or Menu > Press Select In Game."));
+    pg.items.push_back(MenuItem::choice(
+        "Menu Buttons", {"Bottom Confirms", "Right Confirms"}, [this]() { return cfg.confirmRight ? 1 : 0; },
+        [this](int v) {
+          cfg.confirmRight = v != 0;
+          applyConfig();
+        },
+        "Which face button chooses in the menus and the launcher: the bottom one (A on an Xbox pad), or the right "
+        "one (A on a Nintendo pad); the other goes back. The games' own buttons are set by their TYPE A / TYPE B "
+        "and Button Bindings."));
     pg.items.push_back(MenuItem::slider("Stick Deadzone", 10, 80, 5, [this]() { return cfg.deadzone; },
                                         [this](int v) { cfg.deadzone = v; }, "%"));
 #ifndef _WIN32

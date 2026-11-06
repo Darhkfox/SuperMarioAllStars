@@ -677,7 +677,10 @@ void Launcher::draw(Menu& menu, int w, int h) {
     bx += bws[i] + bgap;
   }
   text(W * 0.5f, H - lh(fSmall) * 1.6f,
-       hint_.empty() ? "\xE2\x86\x90\xE2\x86\x92 Choose    Enter / (A) Play    F11 Fullscreen    Esc Quit" : hint_, fSmall,
+       !hint_.empty()  ? hint_
+       : confirmRight_ ? "\xE2\x86\x90\xE2\x86\x92 Choose    Enter / (B) Play    F11 Fullscreen    Esc Quit"
+                       : "\xE2\x86\x90\xE2\x86\x92 Choose    Enter / (A) Play    F11 Fullscreen    Esc Quit",
+       fSmall,
        false, argb(0xFFA3B0CC), 1);
 }
 

@@ -223,6 +223,9 @@ shown centred, as they were designed as a single screen.
                  A card without a cover keeps its live preview. Covers also
                  make the launcher lighter on slow devices (no preview runs
                  for a card with a cover).
+  Controls       bindings for both players, Select Button, and Menu Buttons:
+                 Right Confirms makes the pad's right face button choose in
+                 the menus and the bottom one go back (Nintendo's layout).
   Audio          volume, latency, and Music Pack (custom soundtracks, below).
   Gameplay       NES Brick Bounce: in Super Mario Bros. and The Lost Levels,
                  breaking a brick from below sends Mario back down as on the
