@@ -1530,6 +1530,11 @@ void App::frame(double dt, int gameFrames) {
         at.padPos++;
       }
 #endif
+      // (Of the frames a pass runs, only the last is drawn: a device that
+      // falls behind (a Galaxy A12: 30 fps, the sound stuttering) runs two a
+      // pass, and drawing is most of a frame's work. The game keeps its speed
+      // and its sound; the picture changes less often. Fast forward too.)
+      snes->ppu.skipRender = !loading && i < runs - 1;
       game->beforeFrame();
       snes->runFrame();
       game->afterFrame();
@@ -1547,6 +1552,7 @@ void App::frame(double dt, int gameFrames) {
       if (cfg.rewind && !achLocked() && !loading && !game->coopMidTurn() && (++rewindCount & 1) == 0)
         rewind.push(snes->saveState());
     }
+    snes->ppu.skipRender = false;
     achFrame();
   }
   sramTimer += dt;
