@@ -108,6 +108,11 @@ struct App {
     // (display.pacing_log: refreshes per pass seen, 0 1 2 3+; the passes' spacing)
     int vbSeen[4] = {}, logPasses = 0, logFrames = 0;
     double dtLo = 1e9, dtHi = 0, logAt = 0;
+    int offBeatCount = 0;           // passes in a row whose wait wasn't a whole number of refreshes
+    bool offBeatLogged = false;
+    double sumReal = 0, sumCounted = 0;  // (this window's time gone by, and its refreshes counted)
+    int nWin = 0;
+    bool clockMode = false;         // game time from the clock: the refreshes counted drifted
     unsigned logPresents = 0, logRefreshes = 0;
   } pacing;
   double fpsTimer = 0;
