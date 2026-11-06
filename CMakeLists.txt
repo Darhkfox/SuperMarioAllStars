@@ -64,6 +64,7 @@ add_executable(SuperMarioAllStars WIN32
   src/app/slang.cpp
   src/app/imageload.cpp
   src/app/msupack.cpp
+  src/app/achexport.cpp
   src/app/app.rc
 )
 target_include_directories(SuperMarioAllStars PRIVATE third_party/stb)
@@ -121,6 +122,7 @@ elseif(APPLE)
     src/app/sys_posix.cpp
     src/app/imageload.cpp
     src/app/msupack.cpp
+    src/app/achexport.cpp
     src/platform/android/audio_sdl.cpp
     src/platform/android/input_sdl.cpp
     src/platform/android/touch.cpp
@@ -176,6 +178,7 @@ elseif(UNIX AND NOT ANDROID)
     src/app/sys_posix.cpp
     src/app/imageload.cpp
     src/app/msupack.cpp
+    src/app/achexport.cpp
     src/platform/android/video_gles.cpp
     src/platform/android/audio_sdl.cpp
     src/platform/android/input_sdl.cpp

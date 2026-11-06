@@ -216,6 +216,10 @@ What each page holds:
   colour temperature, colour-vision assist (protanopia / deuteranopia / tritanopia), and
   Mario's Colours / Luigi's Colours: alternate outfits for each brother (Super Mario Bros. and The
   Lost Levels), kept by each in co-op whichever is the game's player.
+* **Menu Style** — how the menus look: *Storybook* (the default: a cream card with a dark outline, Luckiest Guy
+  titles in the game's colour, a yellow star cursor), *Retro* (black with brick bars, a 5x7 pixel font drawn by the
+  port, ? block switches), *Themed Dark* (the dark panel under a heading in the game's pattern: bricks, the Lost
+  Levels' green bricks, SMB2's starry night, SMB3's checkers) or *Classic* (the original dark panel). `src/app/menu.cpp`.
 * **Audio** — volume, latency, mute when unfocused, and **Music Pack**: an MSU-1 custom soundtrack (see below).
 * **Gameplay** — **NES Brick Bounce**: in Super Mario Bros. and The Lost Levels, a brick broken from below sends Mario back down as on the NES instead of letting him keep rising (BMF54123's brick fix, updated by Blittle McNilsen, written into the console's ROM while on: `SmasGame::setNesBrickBounce`). Off by default.
 * **Credits** — where to find the author (YouTube, Reddit, GitHub; each opens in your browser).
@@ -312,6 +316,13 @@ explains this once.
 In SMB1 co-op, Player Two counts when Luigi takes the axe or rides the flagpole down (as the
 game's player, or kept aside and already on the pole as the flag scene starts), and Not a Scratch
 is lost when either player is hurt.
+
+
+**Export to CSV** (top of the Achievements list) writes an `achievements export` folder: `achievements.csv` in
+the columns PlayniteAchievements' spreadsheet import reads (ID, Title, Description, Points, Trophy Type, Hidden,
+Rarity, Category, Progress, Progress Total, Unlocked, Unlock Time, Unlocked Icon, Locked Icon) and `icons/` with
+each achievement's badge, earned and locked, drawn by the port (`src/app/achexport.cpp`: a colour per game, a rim
+per trophy tier, a symbol per achievement). Points follow the tier: bronze 10, silver 25, gold 50, platinum 100.
 
 ## Frame pacing
 The games run at 60.1 frames per second. With VSync on, the frame loop waits on the display's

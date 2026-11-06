@@ -84,6 +84,7 @@ private:
   float anim_[kCards + 1 + kButtons] = {};
   int repeatDir_ = 0;
   float repeatTimer_ = 0;
+  float time_ = 0;  // (the chosen button's star bobs)
   int soundCard_ = -1;
   std::string hint_;
   bool confirmRight_ = false;

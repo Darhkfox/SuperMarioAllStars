@@ -249,6 +249,9 @@ shown centred, as they were designed as a single screen.
                  A card without a cover keeps its live preview. Covers also
                  make the launcher lighter on slow devices (no preview runs
                  for a card with a cover).
+  Menu Style     how these menus look: Storybook (bright and chunky, the
+                 default), Retro (black, bricks and a pixel font), Themed Dark
+                 (the dark panel under the game's own heading) or Classic.
   Controls       bindings for both players, Select Button, and Menu Buttons:
                  Right Confirms makes the pad's right face button choose in
                  the menus and the bottom one go back (Nintendo's layout).
@@ -315,6 +318,14 @@ whether the pack was found and which patch it used.
 Fair play: while achievements are on, cheats, level select, fast forward and
 rewind are switched off. Turn achievements off under Options to use them.
 A run counts when the game is started from the launcher or with Reset Game.
+
+Export to CSV (in the Achievements list) writes an "achievements export"
+folder: achievements.csv (ID, title, description, points, trophy type,
+hidden, progress, unlocked and when, icon paths) and icons/ with each
+achievement's badge, earned and locked - ready for PlayniteAchievements'
+spreadsheet import. Windows: next to the exe; Steam Deck:
+~/.local/share/SuperMarioAllStars; Mac: ~/Library/Application Support/
+SuperMarioAllStars; Android: Android/data/com.darhkfox.allstars/files.
 
 
 =====================================================================

@@ -278,6 +278,7 @@ void Launcher::runPreviews(int frames, bool sound, Audio& audio, double refreshH
 }
 
 Launcher::Action Launcher::update(const MenuInput& in, float dt) {
+  time_ += dt;
   const int N = (int)cards_.size();  // cards 0..N-1, buttons N..N+4
   // A held direction moves once, then repeats, slower than the menus (moved
   // every refresh, a pad's stick flew along the cards).
@@ -423,8 +424,9 @@ void Launcher::draw(Menu& menu, int w, int h) {
   const float fSmall = std::max(8.0f, std::round(base / 40)), fBody = std::max(8.0f, std::round(base / 28)),
               fTitle = std::max(8.0f, std::round(base / 16)), fHuge = std::max(8.0f, std::round(base / 9));
   const auto lh = [](float size, float scale = 1.0f) { return size * scale * kLine; };
+  // (the canvas's own text: the menus' style is for the menus and the buttons below)
   const auto measure = [&](const std::string& t, float size, bool bold) {
-    return menu.measure(Menu::widen(t), size, bold ? kWeightBold : kWeightNormal);
+    return t.empty() ? 0.0f : cv->measure(Menu::widen(t), size, bold ? kWeightBold : kWeightNormal);
   };
   // text from its top edge: left, centred on x, or right
   const auto text = [&](float x, float y, const std::string& t, float size, bool bold, ColorF c, int align,
@@ -433,11 +435,11 @@ void Launcher::draw(Menu& menu, int w, int h) {
     RectF r = align == 0   ? rectF(x, y, x + 20000, y + l)
                     : align == 1 ? rectF(x - 10000, y, x + 10000, y + l)
                                  : rectF(x - 20000, y, x, y + l);
-    menu.text(Menu::widen(t), r, sz, bold ? kWeightBold : kWeightNormal, c,
-              align == 0   ? kAlignLeading
-              : align == 1 ? kAlignCenter
-                           : kAlignTrailing,
-              kParaNear);
+    cv->text(Menu::widen(t), r, sz, bold ? kWeightBold : kWeightNormal, c,
+             align == 0   ? kAlignLeading
+             : align == 1 ? kAlignCenter
+                          : kAlignTrailing,
+             kParaNear);
   };
   const auto fill = [&](RectF r, ColorF c) { cv->fillRect(r, c); };
   const ColorF acc = accent();
@@ -652,11 +654,24 @@ void Launcher::draw(Menu& menu, int w, int h) {
                       withA(an > 0.01f ? c : argb(0xFF2A3040), 0.6f + 0.4f * an));
   }
 
-  // Buttons
+  // Buttons, in the menus' style: Storybook's cream pills outlined in brown
+  // (yellow with a star when chosen) and Luckiest Guy; Retro's boxes with a
+  // gold arrow and pixels; Themed Dark's pills with a star and Luckiest Guy;
+  // Classic's plain pills.
+  const int style = menu.style;
+  const bool story = style == Menu::kStorybook, retro = style == Menu::kRetro, themed = style == Menu::kThemedDark;
+  const bool display = story || themed;  // (labels in the display face)
+  const ColorF ink = argb(0xFF3A1D0E), gold = argb(0xFFFCBC3C);
+  const float inkW = std::max(2.0f, H / 300.0f);
   const float bh = lh(fBody) * 1.6f;
+  const auto labelSize = [&](float scale) { return (display ? fBody * 1.12f : retro ? fBody * 0.8f : fBody) * scale; };
+  const auto labelW = [&](const char* t, float scale) {
+    const std::wstring w = Menu::widen(t);
+    return display || retro ? menu.displayMeasure(w, labelSize(scale)) : measure(t, fBody * scale, false);
+  };
   float bws[kButtons], total = 0;
   for (int i = 0; i < kButtons; i++) {
-    bws[i] = measure(kButtonNames[i], fBody, false) + bh * 1.4f;
+    bws[i] = labelW(kButtonNames[i], 1.0f) + bh * (story || themed || retro ? 1.9f : 1.4f);
     total += bws[i];
   }
   float bgap = W * 0.02f;
@@ -671,9 +686,44 @@ void Launcher::draw(Menu& menu, int w, int h) {
     RectF br = rectF(bx, by + bh * (1.0f - bs) * 0.5f, bx + bws[i], 0);
     br.bottom = br.top + bh * bs;
     buttonHits_[i] = br;
-    menu.fillRound(br, (br.bottom - br.top) * 0.5f, lerp(argb(0xFF1C2230), acc, an * 0.85f));
-    text((br.left + br.right) * 0.5f, br.top + ((br.bottom - br.top) - lh(fBody, bs)) * 0.5f, kButtonNames[i], fBody,
-         false, an > 0.5f ? argb(0xFF10131A) : argb(0xFFD8DDE8), 1, bs);
+    const float bhh = br.bottom - br.top, cy = (br.top + br.bottom) * 0.5f;
+    const std::wstring name = Menu::widen(kButtonNames[i]);
+    // (the label's box: past the star or arrow when chosen)
+    RectF lr = br;
+    if (story) {
+      menu.fillRound(br, bhh * 0.5f, lerp(argb(0xFFFFF8E4), argb(0xFFFFD400), an));
+      menu.outlineRound(br, bhh * 0.5f, inkW, ink);
+      if (an > 0.01f) {
+        menu.star(br.left + bhh * 0.55f, cy + std::sin(time_ * 5.0f) * bhh * 0.04f, bhh * 0.3f * an,
+                  argb(0xFFFFFFFF), ink, inkW * 0.7f);
+        lr.left += bhh * 0.45f * an;
+      }
+      menu.displayText(name, lr, labelSize(bs), ink, ColorF{}, 0.0f, kAlignCenter);
+    } else if (retro) {
+      cv->fillRect(br, argb(0xFF000000));
+      cv->strokeRect(br, inkW, an > 0.5f ? gold : argb(0xFFFCFCFC));
+      if (an > 0.5f) {
+        const float cs = labelSize(bs) * 0.5f, ax = br.left + bhh * 0.35f;
+        const PointF tri[3] = {{ax, cy - cs * 0.7f}, {ax + cs, cy}, {ax, cy + cs * 0.7f}};
+        cv->fillPolygon(tri, 3, gold);
+        lr.left += bhh * 0.45f;
+      }
+      menu.displayText(name, lr, labelSize(bs), an > 0.5f ? gold : argb(0xFFFCFCFC), ColorF{}, 0.0f, kAlignCenter);
+    } else {
+      menu.fillRound(br, bhh * 0.5f, lerp(argb(0xFF1C2230), acc, an * 0.85f));
+      if (themed) {
+        if (an > 0.01f) {
+          menu.star(br.left + bhh * 0.5f, cy, bhh * 0.26f * an, argb(0xFFFFD83D), argb(0xFFB8860B),
+                    std::max(1.0f, H / 900.0f));
+          lr.left += bhh * 0.4f * an;
+        }
+        menu.displayText(name, lr, labelSize(bs), an > 0.5f ? argb(0xFF10131A) : argb(0xFFFFFFFF), ColorF{}, 0.0f,
+                         kAlignCenter);
+      } else {
+        text((br.left + br.right) * 0.5f, br.top + (bhh - lh(fBody, bs)) * 0.5f, kButtonNames[i], fBody, false,
+             an > 0.5f ? argb(0xFF10131A) : argb(0xFFD8DDE8), 1, bs);
+      }
+    }
     bx += bws[i] + bgap;
   }
 #ifdef __APPLE__
@@ -681,13 +731,15 @@ void Launcher::draw(Menu& menu, int w, int h) {
 #else
 #define FULLSCREEN_HINT "F11 Fullscreen"
 #endif
-  text(W * 0.5f, H - lh(fSmall) * 1.6f,
-       !hint_.empty()  ? hint_
-       : confirmRight_ ? "\xE2\x86\x90\xE2\x86\x92 Choose    Enter / (B) Play    " FULLSCREEN_HINT "    Esc Quit"
-                       : "\xE2\x86\x90\xE2\x86\x92 Choose    Enter / (A) Play    " FULLSCREEN_HINT "    Esc Quit",
-       fSmall,
-       false, argb(0xFFA3B0CC), 1);
+  const std::string keys = !hint_.empty()  ? hint_
+                           : confirmRight_ ? "\xE2\x86\x90\xE2\x86\x92 Choose    Enter / (B) Play    " FULLSCREEN_HINT "    Esc Quit"
+                                           : "\xE2\x86\x90\xE2\x86\x92 Choose    Enter / (A) Play    " FULLSCREEN_HINT "    Esc Quit";
 #undef FULLSCREEN_HINT
+  if (retro)
+    menu.pixelText(Menu::widen(keys), rectF(0, H - lh(fSmall) * 1.6f, W, H - lh(fSmall) * 0.6f), fSmall * 0.78f,
+                   argb(0xFFBCBCBC), kAlignCenter, kParaNear);
+  else
+    text(W * 0.5f, H - lh(fSmall) * 1.6f, keys, fSmall, story, argb(0xFFA3B0CC), 1);
 }
 
 bool Launcher::overLink(float x, float y) const {

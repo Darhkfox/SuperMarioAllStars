@@ -102,6 +102,7 @@ struct Config {
   int interpolation = 0;       // 0 = hardware gaussian
   // Input
   int selectMode = 0;          // 0 = Select opens the menu, 1 = tap: game Select / hold: menu
+  int menuStyle = 0;           // the menus' look: 0 Storybook, 1 Retro, 2 Themed Dark, 3 Classic (Menu::Style)
   bool confirmRight = false;   // menus: the right face button confirms, the bottom one backs out (Nintendo's way)
   int deadzone = 35;           // percent
   int touchMode = 0;           // on-screen controls (touch screens): 0 while touch is used, 1 always, 2 never
