@@ -392,6 +392,7 @@ private:
   // (Pages from $80 up are left of page 0: LL 8-4's maze loop puts the
   // camera on page $FF.)
   int camera() const { return (int8_t)ram(0x071a) * 256 + ram(0x071c); }
+  bool leavesBuilt(int x);
   int parserPos() const { return (int8_t)ram(0x0725) * 256 + ram(0x0726) * 16; }
   void trackParser();
 };
