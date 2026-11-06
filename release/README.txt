@@ -210,6 +210,19 @@ shown centred, as they were designed as a single screen.
                  outfits, Super Mario Bros. and The Lost Levels only).
   Launcher       "Launcher Shows": one Super Mario All-Stars card (default)
                  or The Four Games as separate cards.
+                 "Game Covers" shows your own cover pictures on the cards in
+                 place of the live previews, and "Custom Background" your own
+                 picture behind the launcher. None are included - add your
+                 own (PNG or JPG):
+                   PC / Steam Deck: Open Covers Folder, then name them
+                     smb1, lostlevels, smb2, smb3, allstars (the single
+                     card) and background (e.g. smb3.png, background.jpg).
+                     Switch the option off and on again to read new ones.
+                   Android: Choose Cover / Choose Background pick a picture
+                     from your phone.
+                 A card without a cover keeps its live preview. Covers also
+                 make the launcher lighter on slow devices (no preview runs
+                 for a card with a cover).
 
 
 =====================================================================
@@ -285,6 +298,7 @@ Third-party components:
   SDL2 (Android and Linux builds) - Sam Lantinga and contributors, zlib licence.
   DejaVu Sans font (Linux build) - DejaVu fonts team, Bitstream Vera licence.
   Luckiest Guy font - Astigmatic, Apache License 2.0.
+  stb_image (reading your cover pictures) - Sean Barrett, public domain / MIT.
   librashader (Windows slang shaders) - Mozilla Public License 2.0
     (librashader-LICENSE.md; source: github.com/SnowflakePowered/librashader).
   Included slang shader presets, unmodified from the libretro slang-shaders

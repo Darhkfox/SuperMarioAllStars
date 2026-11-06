@@ -1,4 +1,5 @@
 #include "app/launcher.h"
+#include "app/imageload.h"
 #include <algorithm>
 #include <chrono>
 #include <cmath>
@@ -84,10 +85,65 @@ void Launcher::releaseGpu() {
     for (Preview& p : prev_)
       if (p.image) canvas_->freeImage(p.image);
     if (logo_) canvas_->freeImage(logo_);
+    for (Art& a : cover_)
+      if (a.image) canvas_->freeImage(a.image);
+    if (bgArt_.image) canvas_->freeImage(bgArt_.image);
   }
   floor_ = star_ = logo_ = 0;
   for (Preview& p : prev_) p.image = 0;
+  for (Art& a : cover_) a.image = 0;
+  bgArt_.image = 0;
   canvas_ = nullptr;
+}
+
+const char* Launcher::artName(int card) {
+  static const char* const kNames[kCards + 1] = {"smb1", "lostlevels", "smb2", "smb3", "allstars"};
+  return card >= 0 && card <= kCards ? kNames[card] : "background";
+}
+
+void Launcher::freeArt() {
+  for (Art* a : {&cover_[0], &cover_[1], &cover_[2], &cover_[3], &cover_[4], &bgArt_}) {
+    if (a->image && canvas_ && canvas_->epoch() == epoch_) canvas_->freeImage(a->image);
+    *a = Art{};
+  }
+}
+
+void Launcher::readArt(Art& a, const char* name) {
+  for (const wchar_t* ext : {L".png", L".jpg", L".jpeg", L".PNG", L".JPG", L".JPEG"}) {
+    std::wstring path = artDir_ + L"/" + std::wstring(name, name + strlen(name)) + ext;
+    // (a big picture shrunk: 1024 px is plenty for a card, 2048 for a background)
+    if (loadImageFile(path, &a == &bgArt_ ? 2048 : 1024, a.px, &a.w, &a.h)) return;
+  }
+  a = Art{};
+}
+
+void Launcher::setArt(const std::wstring& dir, bool covers, bool background, bool reload) {
+  if (!reload && dir == artDir_ && covers == useCovers_ && background == useBg_) return;
+  freeArt();
+  artDir_ = dir;
+  useCovers_ = covers;
+  useBg_ = background;
+  if (covers)
+    for (int i = 0; i <= kCards; i++) readArt(cover_[i], artName(i));
+  if (background) readArt(bgArt_, "background");
+  // (a card that has a cover now: its preview stopped, its sound with it)
+  for (int i = 0; i <= kCards; i++)
+    if (hasCover(i)) {
+      prev_[i].game.reset();
+      prev_[i].snes.reset();
+      prev_[i].ready = false;
+      prev_[i].bootFrames = 0;
+      prev_[i].shown = 0;
+      if (soundCard_ == i) soundCard_ = -1;
+    }
+}
+
+int Launcher::artImage(Canvas* cv, Art& a) {
+  if (!a.image && a.w > 0) {
+    a.image = cv->makeImage(a.w, a.h, true);
+    if (a.image) cv->updateImage(a.image, a.px.data(), a.w);
+  }
+  return a.image;
 }
 
 // (A new canvas (the device rebuilt): what was made on the old one is gone.)
@@ -96,6 +152,8 @@ void Launcher::useCanvas(Canvas* cv) {
   if (canvas_ != cv || !cv || cv->epoch() != epoch_) {
     floor_ = star_ = logo_ = 0;
     for (Preview& p : prev_) p.image = 0;
+    for (Art& a : cover_) a.image = 0;
+    bgArt_.image = 0;
   }
   canvas_ = cv;
   epoch_ = cv ? cv->epoch() : 0;
@@ -153,6 +211,7 @@ void Launcher::runPreviews(int frames, bool sound, Audio& audio, double refreshH
   for (int k = 0; k < N; k++) {
     int i = cards_[(lastCard_ + k) % N];
     Preview& p = prev_[i];
+    if (hasCover(i)) continue;  // (its cover instead)
     if (!p.snes && rom_) startPreview(i);
     if (!p.snes || p.ready) continue;
     // (Booting out of sight, nothing drawn: the Steam Deck, at 60 Hz and a
@@ -256,6 +315,25 @@ Launcher::Action Launcher::update(const MenuInput& in, float dt) {
 // (drawn here: no picture from the game).
 void Launcher::drawBackground(Menu& menu, float W, float H) {
   Canvas* cv = menu.canvas();
+  if (useBg_ && bgArt_.w > 0) {
+    // The player's picture: filling the window (its middle, the rest cut
+    // off; not stretched), darkened a little and shaded at the bottom, so
+    // the title, cards and buttons read over anything.
+    if (int img = artImage(cv, bgArt_)) {
+      const float s = std::max(W / bgArt_.w, H / bgArt_.h), dw = bgArt_.w * s, dh = bgArt_.h * s;
+      cv->fillRect(rectF(0, 0, W, H), argb(0xFF000000));
+      cv->pushClip(rectF(0, 0, W, H));
+      cv->drawImage(img, rectF((W - dw) * 0.5f, (H - dh) * 0.5f, (W + dw) * 0.5f, (H + dh) * 0.5f), 1.0f, true);
+      cv->popClip();
+      cv->fillRect(rectF(0, 0, W, H), colorF(0.0f, 0.0f, 0.03f, 0.35f));
+      const float shade = H * 0.25f;
+      for (float y = H - shade; y < H; y += 2) {
+        float a = (y - (H - shade)) / shade;
+        cv->fillRect(rectF(0, y, W, y + 2), colorF(0.0f, 0.0f, 0.03f, 0.75f * a * a));
+      }
+      return;
+    }
+  }
   const float horizon = std::round(H * 0.6f);
   const ColorF skyTop = argb(0xFF070F2C), skyLow = argb(0xFF1D3B88), floorDark = argb(0xFF132A63),
                floorLight = argb(0xFF3459B2);
@@ -480,7 +558,18 @@ void Launcher::draw(Menu& menu, int w, int h) {
     pr.right = pr.left + pw;
     pr.bottom = pr.top + pw / aspect;
     menu.fillRound(pr, rad * 0.5f, argb(0xFF0A0D14));
-    if (pv.snes && pv.ready) {
+    if (hasCover(cards_[i]) && haveRom_) {
+      // The player's cover, whole (box art is upright, the area is wide: the
+      // dark backdrop either side), dimmed when the card isn't chosen.
+      Art& a = cover_[cards_[i]];
+      if (int img = artImage(cv, a)) {
+        const float aw = pr.right - pr.left, ah = pr.bottom - pr.top;
+        const float s = std::min(aw / a.w, ah / a.h), dw = a.w * s, dh = a.h * s;
+        const float mx = (pr.left + pr.right) * 0.5f, my = (pr.top + pr.bottom) * 0.5f;
+        cv->drawImage(img, rectF(mx - dw * 0.5f, my - dh * 0.5f, mx + dw * 0.5f, my + dh * 0.5f), 1.0f, true);
+        if (an < 0.99f) fill(pr, colorF(0, 0, 0, 0.35f * (1.0f - an)));
+      }
+    } else if (pv.snes && pv.ready) {
       // The game's 256 px picture (its frame buffer is wider: the margins either side).
       int fh = pv.snes->ppu.frameHeight();
       if (pv.image && pv.imageH != fh) {

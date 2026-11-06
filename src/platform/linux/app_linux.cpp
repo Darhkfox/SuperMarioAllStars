@@ -110,6 +110,7 @@ bool takeRom(const std::wstring& data, const std::string& path) {
 }  // namespace
 
 void openUrl(const char* url) { SDL_OpenURL(url); }
+void openFolder(const std::wstring& path) { SDL_OpenURL(("file://" + narrowUtf8(path)).c_str()); }
 
 void App::applyDisplayMode() {
   if (!window) return;
@@ -181,6 +182,11 @@ void App::pollPick() {
   romPoll = 0;
   pollRom(0);
 }
+
+// (The covers and background go in the covers folder: Options > Launcher >
+// Open Covers Folder; no picker here.)
+void App::pickArt(int) {}
+void App::pollArtPick() {}
 
 // Taps and drags (the Steam Deck's screen; a mouse acts as one finger): on the
 // launcher's cards and buttons, the menus' rows; the on-screen pad's Menu button.

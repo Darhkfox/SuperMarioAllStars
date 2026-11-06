@@ -50,6 +50,14 @@ public:
   ColorF accent() const;
   static ColorF gameAccent(GameId g);
   void stopSound() { soundCard_ = -1; }
+  // The player's own pictures (Options > Launcher; none are shipped): covers
+  // for the cards, in place of their live previews (a card without one keeps
+  // its preview), and a background, from `dir` (artName(card) or
+  // "background", .png / .jpg / .jpeg). Read again when anything changed, or
+  // `reload` (a picture chosen).
+  void setArt(const std::wstring& dir, bool covers, bool background, bool reload = false);
+  static const char* artName(int card);  // (smb1, lostlevels, smb2, smb3, allstars)
+  bool hasCover(int card) const { return useCovers_ && card >= 0 && card <= kCards && cover_[card].w > 0; }
 
 private:
   struct Preview {
@@ -88,6 +96,17 @@ private:
   float bgW_ = 0, bgH_ = 0;
   void useCanvas(Canvas* cv);
   int logo_ = 0;  // (the Team RedTail logo's picture)
+  struct Art {
+    std::vector<uint32_t> px;  // (read from the file; made a picture on the canvas when first drawn)
+    int w = 0, h = 0;
+    int image = 0;
+  };
+  Art cover_[kCards + 1], bgArt_;
+  std::wstring artDir_;
+  bool useCovers_ = false, useBg_ = false;
+  void readArt(Art& a, const char* name);
+  int artImage(Canvas* cv, Art& a);
+  void freeArt();
   void drawBackground(Menu& menu, float W, float H);
   void releaseBackground();
 };

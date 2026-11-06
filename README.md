@@ -82,6 +82,16 @@ game select into the game's title, out of sight while it starts. Choosing a card
 and takes it through the All-Stars menu to that game's save files (behind a short black loading
 screen), where you pick the file as usual. The launcher remembers the last game chosen.
 
+*Options → Game Covers* shows the player's own cover pictures on the cards instead of the live
+previews, and *Custom Background* their own picture behind the launcher (filling the window, darkened
+a little so the text reads). None are shipped. PNG or JPG files named `smb1`, `lostlevels`, `smb2`,
+`smb3`, `allstars` (the single card) and `background` go in the `covers` folder (*Open Covers Folder*:
+next to the exe on Windows, in `~/.local/share/SuperMarioAllStars` on Linux); on Android *Choose Cover*
+/ *Choose Background* copy a picture from the phone in. They're read with
+[stb_image](https://github.com/nothings/stb) (`third_party/stb`, public domain / MIT), big ones
+shrunk to 1024 px (2048 for the background). A card without a cover keeps its preview; one with a
+cover runs no preview console at all, which also makes the launcher lighter on slow devices.
+
 ## Controls
 | | Keyboard | Joypad (Xbox layout; PlayStation, Switch Pro and USB/SNES pads supported) |
 |---|---|---|

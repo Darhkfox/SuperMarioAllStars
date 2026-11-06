@@ -236,6 +236,8 @@ bool Config::load(const std::wstring& path) {
   getb("display.pacing_log", pacingLog);
   geti("launcher.last_game", lastGame, 0, 3);
   getb("launcher.allstars_only", launcherAllStars);
+  getb("launcher.covers", launcherCovers);
+  getb("launcher.background", launcherBackground);
   getb("display.hud_anchor", hudAnchor);
   getb("display.dim_wrap", dimWrap);
   geti("display.pillarbox", pillarbox, 0, 2);
@@ -303,6 +305,8 @@ bool Config::save(const std::wstring& path) const {
   f << "[launcher]\n";
   f << "last_game=" << lastGame << "\n";
   f << "allstars_only=" << launcherAllStars << "\n";
+  f << "covers=" << launcherCovers << "\n";
+  f << "background=" << launcherBackground << "\n";
   f << "[graphics]\n";
   f << "filter=" << filter << "\n";
   f << "scanlines=" << scanlines << "\n";

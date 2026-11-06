@@ -78,6 +78,9 @@ struct App {
   bool pickingRom = false;
   void pickRom();   // the system file picker, the file copied into the app (see SmasActivity)
   void pollPick();
+  void pickArt(int card);  // a cover (card 0-4) or the background (-1) chosen with the system picker (Android)
+  void pollArtPick();
+  bool pickingArt = false;
   void touchFrame();  // taps and drags on the launcher and menus, the on-screen pad's buttons
 #endif
   Launcher::Action launcherTap = Launcher::kNone;  // (a card or button tapped or clicked: see frameLauncher)
@@ -196,6 +199,7 @@ struct App {
   std::string blackFramesNote() const;
   void applyDisplayMode();
   void applyConfig();
+  void applyLauncherArt(bool reload = false);  // the covers and background (see Launcher::setArt)
   // The slang shader preset in cfg.slangPreset loaded (or dropped) if it
   // isn't what the video layer has; force after the device was recreated.
 #ifdef _WIN32
