@@ -1,7 +1,7 @@
-SUPER MARIO ALL-STARS - PC, STEAM DECK & ANDROID PORT
+SUPER MARIO ALL-STARS - PC, STEAM DECK, MAC & ANDROID PORT
 Version 1.0
 
-A native Windows, Linux (Steam Deck) and Android version of Super Mario
+A native Windows, Linux (Steam Deck), macOS and Android version of Super Mario
 All-Stars (SNES), with true widescreen, simultaneous two-player co-op, a
 launcher, save states, rewind, achievements, cheats, level select, a sound test
 and a music player.
@@ -95,6 +95,30 @@ F11 or Alt+Enter switches between windowed and fullscreen. Saves, states and
 settings are kept in ~/.local/share/SuperMarioAllStars. On Linux the slang
 shader presets and High Frame Rate aren't available (the built-in CRT filters
 are).
+
+
+=====================================================================
+ MAC
+=====================================================================
+
+Requirements: macOS 11 Big Sur or later, on an Apple silicon or Intel Mac.
+
+1. Open SuperMarioAllStars-macOS.zip and move Super Mario All-Stars to your
+   Applications folder.
+2. Open it. The app isn't signed with an Apple developer account, so the
+   first time macOS says it can't check it for malware. On macOS 15 or later,
+   click Done, then System Settings > Privacy & Security > Open Anyway. On
+   macOS 11 to 14, right-click the app, choose Open, then Open again. You only
+   do this once.
+3. Click the "ROM not found" card and pick your
+   "Super Mario All-Stars (USA).sfc"; it is copied in, so you only do this
+   once. (Or drop the file on the window, or put it in a "roms" folder beside
+   the app.)
+
+Option+Return or Ctrl+Cmd+F switches between windowed and fullscreen. Saves,
+states and settings are kept in ~/Library/Application Support/
+SuperMarioAllStars. On the Mac the slang shader presets and High Frame Rate
+aren't available (the built-in CRT filters are).
 
 
 =====================================================================
@@ -282,7 +306,7 @@ Super Mario All-Stars PC Port
   Patreon   patreon.com/c/TeamRedTail
 
 Third-party components:
-  SDL2 (Android and Linux builds) - Sam Lantinga and contributors, zlib licence.
+  SDL2 (Android, Linux and Mac builds) - Sam Lantinga and contributors, zlib licence.
   DejaVu Sans font (Linux build) - DejaVu fonts team, Bitstream Vera licence.
   Luckiest Guy font - Astigmatic, Apache License 2.0.
   librashader (Windows slang shaders) - Mozilla Public License 2.0

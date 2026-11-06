@@ -29,6 +29,22 @@ The APK ends up in `android/app/build/outputs/apk/debug/` (64-bit ARM phones and
 later, and the x86_64 emulator). Release builds are signed when `android/keystore.properties` names a
 keystore (`storeFile`, `storePassword`, `keyAlias`, `keyPassword`), as the Disney collection's are.
 
+### macOS
+The macOS app uses the same SDL2 layer as Android for the window, sound and controllers, and Metal for
+the picture (text from Core Text). You need Xcode or its command line tools and CMake 3.20+. With the
+SDL2 source in `third_party/SDL2-2.32.10-src` (`packaging/macos/fetch_sdl.sh` downloads and checks it),
+SDL is built into the app; otherwise an installed SDL2 is used (Homebrew's: add
+`-DCMAKE_OSX_ARCHITECTURES=arm64`).
+
+```
+packaging/macos/fetch_sdl.sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+```
+The app is `build/SuperMarioAllStars.app`: universal (Apple silicon and Intel), macOS 11 or later.
+`.github/workflows/macos.yml` builds it on GitHub's macOS runners, signs it ad hoc and publishes a
+`macos-beta` pre-release, so no Mac is needed to make one.
+
 ## Running
 Put the ROM next to the executable, in a `roms` folder beside it, or in any parent folder up to
 three levels up; the location is remembered in `rompath.txt`. Without it the launcher's cards say
@@ -493,7 +509,8 @@ games (see `tools/SMASTOOL.md`); findings are documented in `docs/re/`.
 | `src/game/` | The four games' widescreen, achievements, cheats, level select and co-op |
 | `src/app/` | The application, the same on both systems: `app.cpp` (launcher, game, menu pages, achievements), menus (`menu.cpp`), launcher, music player, settings, drawn on `canvas.h`; `sys.h` for files and paths. Windows: `app_win.cpp` (window, frame pacing, test modes), `video.cpp` (Direct3D 11), `canvas_d2d.cpp` (Direct2D / DirectWrite), `audio.cpp` (XAudio2), `input.cpp` (XInput / DirectInput) |
 | `src/platform/android/` | Android: `app_android.cpp` (SDL window, events, pacing, ROM picker), `video_gles.cpp` (OpenGL ES picture and canvas, text from Android's own font), `audio_sdl.cpp`, `input_sdl.cpp`, `touch.cpp` |
+| `src/platform/macos/` | macOS: `app_macos.mm` (SDL window, events, pacing, ROM picker), `video_metal.mm` (Metal picture and canvas, text from Core Text); sound and controllers from `src/platform/android/` |
 | `android/` | Gradle project; `SmasActivity.java` adds the ROM picker and the UI font rasteriser to SDL's activity |
 
-The Android build uses SDL2 by Sam Lantinga and contributors (zlib licence, `third_party/SDL2-2.32.10-src`).
+The Android and macOS builds use SDL2 by Sam Lantinga and contributors (zlib licence, `third_party/SDL2-2.32.10-src`).
 The launcher's title is set in Luckiest Guy by Astigmatic (Apache 2.0 licence, `third_party/fonts`), copied beside the exe and into the Android app.

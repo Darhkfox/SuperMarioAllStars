@@ -103,7 +103,8 @@ elseif(APPLE)
   set(MAC_RESOURCES
     ${CMAKE_SOURCE_DIR}/third_party/fonts/LuckiestGuy-Regular.ttf
     ${CMAKE_SOURCE_DIR}/third_party/fonts/LICENSE.txt
-    ${CMAKE_SOURCE_DIR}/release/README.txt)
+    ${CMAKE_SOURCE_DIR}/release/README.txt
+    ${CMAKE_SOURCE_DIR}/packaging/macos/AppIcon.icns)
   set_source_files_properties(${MAC_RESOURCES} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
   add_executable(SuperMarioAllStars MACOSX_BUNDLE
     src/app/app.cpp
