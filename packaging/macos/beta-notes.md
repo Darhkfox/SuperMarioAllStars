@@ -17,7 +17,8 @@
 - **Controllers:** Xbox, PlayStation, Switch Pro and other controllers macOS supports work, wired or Bluetooth.
 - **Where your files go:** saves, states and settings are kept in `~/Library/Application Support/SuperMarioAllStars`. A `roms` folder there, or beside the app, is searched for the ROM as well.
 - **Crackling sound?** Raise Options → Audio → Latency, for example to 100 ms.
-- **Not in this version:** the slang shaders and High Frame Rate are Windows-only. The built-in CRT filters work.
+- **Slang shaders:** Options → Graphics → Slang Shader runs the seven bundled CRT presets (RetroArch's, through librashader). Your own `.slangp` presets go in a `shaders` folder in `~/Library/Application Support/SuperMarioAllStars`.
+- **Not in this version:** High Frame Rate is Windows-only.
 
 ## Found a problem?
 Please [open an issue](https://github.com/Darhkfox/SuperMarioAllStars/issues) and include:

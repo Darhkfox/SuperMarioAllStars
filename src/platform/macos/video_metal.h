@@ -48,6 +48,11 @@ public:
   void endUi();
   void present();
   bool capture(std::vector<uint32_t>& out, int* w, int* h);
+  // A slang shader preset in place of the built-in filters (empty: off);
+  // false (and why) if it couldn't be loaded. See slang_metal.h.
+  bool setSlang(const std::wstring& path, std::string* error);
+  bool slangActive() const;
+  bool slangAvailable();
 
 private:
   struct State;  // (the Metal objects: video_metal.mm)

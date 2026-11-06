@@ -34,10 +34,13 @@ The macOS app uses the same SDL2 layer as Android for the window, sound and cont
 the picture (text from Core Text). You need Xcode or its command line tools and CMake 3.20+. With the
 SDL2 source in `third_party/SDL2-2.32.10-src` (`packaging/macos/fetch_sdl.sh` downloads and checks it),
 SDL is built into the app; otherwise an installed SDL2 is used (Homebrew's: add
-`-DCMAKE_OSX_ARCHITECTURES=arm64`).
+`-DCMAKE_OSX_ARCHITECTURES=arm64`). For the slang presets, `packaging/macos/build_librashader.sh`
+builds librashader 0.12.0 from source (needs Rust) into `third_party/librashader/librashader.dylib`,
+which the build puts in the app; without it the built-in filters are used.
 
 ```
 packaging/macos/fetch_sdl.sh
+packaging/macos/build_librashader.sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 ```
@@ -189,6 +192,9 @@ What each page holds:
   exe, MPL-2.0, `third_party/librashader`; without it the game runs on the built-in filters).
   Presets are listed from a `shaders` folder next to the exe, with their shader files beside
   them, e.g. the libretro `slang-shaders` collection; the colour settings don't apply to them.
+  On macOS librashader's Metal runtime is used (`librashader.dylib` in the app's Frameworks,
+  built by `packaging/macos/build_librashader.sh`); the bundled presets are in the app and your
+  own go in a `shaders` folder in the data folder.
   Seven CRT presets are bundled (`third_party/slang-shaders`, copied to `shaders\` by the build):
   crt-lottes (public domain), crt-geom, crt-royale, crt-easymode, crt-aperture, zfast-crt and
   crt-pi (GPL, `LICENSE-GPL-2.0.txt`), unmodified from libretro/slang-shaders with only the files
@@ -509,7 +515,7 @@ games (see `tools/SMASTOOL.md`); findings are documented in `docs/re/`.
 | `src/game/` | The four games' widescreen, achievements, cheats, level select and co-op |
 | `src/app/` | The application, the same on both systems: `app.cpp` (launcher, game, menu pages, achievements), menus (`menu.cpp`), launcher, music player, settings, drawn on `canvas.h`; `sys.h` for files and paths. Windows: `app_win.cpp` (window, frame pacing, test modes), `video.cpp` (Direct3D 11), `canvas_d2d.cpp` (Direct2D / DirectWrite), `audio.cpp` (XAudio2), `input.cpp` (XInput / DirectInput) |
 | `src/platform/android/` | Android: `app_android.cpp` (SDL window, events, pacing, ROM picker), `video_gles.cpp` (OpenGL ES picture and canvas, text from Android's own font), `audio_sdl.cpp`, `input_sdl.cpp`, `touch.cpp` |
-| `src/platform/macos/` | macOS: `app_macos.mm` (SDL window, events, pacing, ROM picker), `video_metal.mm` (Metal picture and canvas, text from Core Text); sound and controllers from `src/platform/android/` |
+| `src/platform/macos/` | macOS: `app_macos.mm` (SDL window, events, pacing, ROM picker), `video_metal.mm` (Metal picture and canvas, text from Core Text), `slang_metal.mm` (librashader); sound and controllers from `src/platform/android/` |
 | `android/` | Gradle project; `SmasActivity.java` adds the ROM picker and the UI font rasteriser to SDL's activity |
 
 The Android and macOS builds use SDL2 by Sam Lantinga and contributors (zlib licence, `third_party/SDL2-2.32.10-src`).

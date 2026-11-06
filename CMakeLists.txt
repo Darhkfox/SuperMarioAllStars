@@ -119,6 +119,7 @@ elseif(APPLE)
     src/platform/android/input_sdl.cpp
     src/platform/android/touch.cpp
     src/platform/macos/video_metal.mm
+    src/platform/macos/slang_metal.mm
     src/platform/macos/app_macos.mm
     ${MAC_RESOURCES}
   )
@@ -127,9 +128,22 @@ elseif(APPLE)
     MACOSX_BUNDLE_BUNDLE_NAME "Super Mario All-Stars"
     MACOSX_BUNDLE_GUI_IDENTIFIER "io.github.darhkfox.supermarioallstars"
     XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC YES)
-  set_source_files_properties(src/platform/macos/video_metal.mm src/platform/macos/app_macos.mm
-    PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
+  set_source_files_properties(src/platform/macos/video_metal.mm src/platform/macos/slang_metal.mm
+    src/platform/macos/app_macos.mm PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
   target_compile_options(SuperMarioAllStars PRIVATE -O2 -Wno-unused-parameter -Wno-sign-compare)
+  # the bundled slang presets, and librashader (loaded at run time when it's
+  # there: packaging/macos/build_librashader.sh builds it)
+  add_custom_command(TARGET SuperMarioAllStars POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/third_party/slang-shaders
+      $<TARGET_BUNDLE_CONTENT_DIR:SuperMarioAllStars>/Resources/shaders
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/third_party/librashader/LICENSE.md
+      $<TARGET_BUNDLE_CONTENT_DIR:SuperMarioAllStars>/Resources/librashader-LICENSE.md)
+  if(EXISTS ${CMAKE_SOURCE_DIR}/third_party/librashader/librashader.dylib)
+    add_custom_command(TARGET SuperMarioAllStars POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_BUNDLE_CONTENT_DIR:SuperMarioAllStars>/Frameworks
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/third_party/librashader/librashader.dylib
+        $<TARGET_BUNDLE_CONTENT_DIR:SuperMarioAllStars>/Frameworks/librashader.dylib)
+  endif()
   target_link_libraries(SuperMarioAllStars smascore ${SDL_LIB}
     "-framework Cocoa" "-framework Metal" "-framework QuartzCore" "-framework CoreText"
     "-framework UniformTypeIdentifiers")

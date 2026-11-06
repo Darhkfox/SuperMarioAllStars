@@ -1186,10 +1186,16 @@ std::shared_ptr<MenuPage> App::pageGraphics() {
                    "LCD Grid"},
         [this]() { return cfg.filter; }, [this](int v) { cfg.filter = v; },
         "Sharp Bilinear keeps pixels crisp without uneven sizes."));
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__APPLE__)
     MenuItem sl = MenuItem::submenu("Slang Shader", [this]() { menu.push(pageSlang()); },
+#ifdef __APPLE__
+                                    "RetroArch slang shader presets (.slangp): the ones that come with the game and "
+                                    "any in the 'shaders' folder of its data folder, in place of the filter above "
+                                    "(and the colour settings).");
+#else
                                     "RetroArch slang shader presets (.slangp) from the 'shaders' folder next to the "
                                     "game, in place of the filter above (and the colour settings).");
+#endif
     sl.valueText = [this]() {
       if (cfg.slangPreset.empty()) return std::string("Off");
       std::wstring n = std::filesystem::path(cfg.slangPreset).stem().wstring();

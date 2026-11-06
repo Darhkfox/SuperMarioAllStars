@@ -198,7 +198,7 @@ struct App {
   void applyConfig();
   // The slang shader preset in cfg.slangPreset loaded (or dropped) if it
   // isn't what the video layer has; force after the device was recreated.
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__APPLE__)
   void applySlang(bool force = false);
   std::wstring slangLoaded;  // the preset loaded now (full path; empty: none)
   std::shared_ptr<MenuPage> pageSlang();

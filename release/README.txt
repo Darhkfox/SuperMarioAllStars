@@ -117,8 +117,8 @@ Requirements: macOS 11 Big Sur or later, on an Apple silicon or Intel Mac.
 
 Option+Return or Ctrl+Cmd+F switches between windowed and fullscreen. Saves,
 states and settings are kept in ~/Library/Application Support/
-SuperMarioAllStars. On the Mac the slang shader presets and High Frame Rate
-aren't available (the built-in CRT filters are).
+SuperMarioAllStars. The slang shader presets work on the Mac too (your own
+go in a "shaders" folder there); High Frame Rate is Windows-only.
 
 
 =====================================================================
@@ -222,8 +222,10 @@ shown centred, as they were designed as a single screen.
                  frame insertion, high frame rate (100 Hz+ displays).
   Graphics       filters (sharp bilinear, CRT scanlines, aperture grille, LCD
                  grid, ...), screen curvature, sprite-limit removal.
-                 Windows: Slang Shader runs RetroArch slang presets from the
-                 "shaders" folder next to the exe (needs librashader.dll).
+                 Windows and Mac: Slang Shader runs RetroArch slang presets
+                 from the "shaders" folder next to the exe (needs
+                 librashader.dll; on the Mac it's in the app, and your own
+                 presets go in the data folder's "shaders").
                  Seven CRT presets come included: CRT Lottes, CRT Geom,
                  CRT Royale, CRT Easymode, CRT Aperture, zfast CRT and CRT Pi.
                  You can add more (e.g. the libretro slang-shaders collection)
@@ -309,7 +311,7 @@ Third-party components:
   SDL2 (Android, Linux and Mac builds) - Sam Lantinga and contributors, zlib licence.
   DejaVu Sans font (Linux build) - DejaVu fonts team, Bitstream Vera licence.
   Luckiest Guy font - Astigmatic, Apache License 2.0.
-  librashader (Windows slang shaders) - Mozilla Public License 2.0
+  librashader (Windows and Mac slang shaders) - Mozilla Public License 2.0
     (librashader-LICENSE.md; source: github.com/SnowflakePowered/librashader).
   Included slang shader presets, unmodified from the libretro slang-shaders
     collection (github.com/libretro/slang-shaders):

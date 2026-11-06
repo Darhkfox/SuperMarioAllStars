@@ -1,6 +1,7 @@
 // Video on macOS (SDL window, Metal): see video_metal.h. The shaders and the
 // canvas follow platform/android/video_gles.cpp line for line where they can.
 #include "platform/macos/video_metal.h"
+#include "platform/macos/slang_metal.h"
 #import <CoreText/CoreText.h>
 #import <Metal/Metal.h>
 #import <QuartzCore/CAMetalLayer.h>
@@ -340,6 +341,8 @@ struct Video::State : Gpu {
   SDL_MetalView view = nullptr;
   id<MTLRenderPipelineState> game;
   id<MTLTexture> tex;
+  SlangChain slang;
+  id<MTLTexture> slangOut;  // (the preset's picture, copied into place: its last pass clears all it draws on)
 };
 
 // ---------------------------------------------------------------------------
@@ -964,6 +967,7 @@ void Video::shutdown() {
   if (s_->cmd) [s_->cmd commit];
   s_->last = s_->cmd;
   s_->waitIdle();
+  s_->slang.release();
   canvas_.reset();
   if (s_->view) SDL_Metal_DestroyView(s_->view);
   s_.reset();
@@ -1022,8 +1026,54 @@ void Video::draw(const VideoParams& p) {
   if (!s_ || !s_->tex) return;
   bool fullCover = p.dest.left <= 0 && p.dest.top <= 0 && p.dest.right >= w_ && p.dest.bottom >= h_;
   if (p.pillarbox == 1 && !fullCover) pass(p, 1, 0, 0, w_, h_);
+  if (s_->slang.active() && s_->drawable) {
+    // (a slang preset: its own passes from the game picture into the same
+    // rectangle, on a command buffer of their own between the backdrop and
+    // the UI; the colour settings are the preset's)
+    s_->endPass();
+    [s_->cmd commit];
+    const int dw = p.dest.right - p.dest.left, dh = p.dest.bottom - p.dest.top;
+    // (the part of the picture on the screen)
+    const int sx = std::max(0, -p.dest.left), sy = std::max(0, -p.dest.top);
+    const int cw = std::min(dw - sx, w_ - std::max(0, p.dest.left)), ch = std::min(dh - sy, h_ - std::max(0, p.dest.top));
+    id<MTLCommandBuffer> cmd = [s_->queue commandBuffer];
+    if (dw > 0 && dh > 0 && cw > 0 && ch > 0) {
+      if (!s_->slangOut || (int)s_->slangOut.width != dw || (int)s_->slangOut.height != dh) {
+        MTLTextureDescriptor* td = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatBGRA8Unorm
+                                                                                      width:(NSUInteger)dw
+                                                                                     height:(NSUInteger)dh
+                                                                                  mipmapped:NO];
+        td.usage = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead | MTLTextureUsageShaderWrite;
+        td.storageMode = MTLStorageModePrivate;
+        s_->slangOut = [s_->dev newTextureWithDescriptor:td];
+      }
+      s_->slang.draw(cmd, s_->tex, s_->slangOut, 0, 0, (float)dw, (float)dh, p.frame);
+      id<MTLBlitCommandEncoder> blit = [cmd blitCommandEncoder];
+      [blit copyFromTexture:s_->slangOut
+                sourceSlice:0
+                sourceLevel:0
+               sourceOrigin:MTLOriginMake((NSUInteger)sx, (NSUInteger)sy, 0)
+                 sourceSize:MTLSizeMake((NSUInteger)cw, (NSUInteger)ch, 1)
+                  toTexture:s_->drawable.texture
+           destinationSlice:0
+           destinationLevel:0
+          destinationOrigin:MTLOriginMake((NSUInteger)std::max(0, p.dest.left), (NSUInteger)std::max(0, p.dest.top), 0)];
+      [blit endEncoding];
+    }
+    [cmd commit];
+    s_->cmd = [s_->queue commandBuffer];
+    return;
+  }
   pass(p, 0, p.dest.left, p.dest.top, p.dest.right - p.dest.left, p.dest.bottom - p.dest.top);
 }
+
+bool Video::setSlang(const std::wstring& path, std::string* error) {
+  return s_ && s_->slang.load(s_->queue, narrowUtf8(path), error);
+}
+
+bool Video::slangActive() const { return s_ && s_->slang.active(); }
+
+bool Video::slangAvailable() { return s_ && s_->slang.available(); }
 
 void Video::beginUi() {
   if (canvas_) canvas_->begin(w_, h_);

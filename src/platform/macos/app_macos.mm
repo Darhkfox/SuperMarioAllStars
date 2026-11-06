@@ -17,6 +17,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <cwctype>
+#include <filesystem>
+#include <set>
 #include <string>
 #include "app/app.h"
 #include "app/sys.h"
@@ -37,9 +39,11 @@ int lockedRefreshes(double hz) {
 double screenHz(SDL_Window* window) {
   SDL_SysWMinfo wm;
   SDL_VERSION(&wm.version);
-  if (SDL_GetWindowWMInfo(window, &wm) && wm.info.cocoa.window) {
-    NSScreen* screen = wm.info.cocoa.window.screen;
-    if (screen && screen.maximumFramesPerSecond > 0) return (double)screen.maximumFramesPerSecond;
+  if (@available(macOS 12.0, *)) {  // (macOS 11: SDL's whole number below)
+    if (SDL_GetWindowWMInfo(window, &wm) && wm.info.cocoa.window) {
+      NSScreen* screen = wm.info.cocoa.window.screen;
+      if (screen && screen.maximumFramesPerSecond > 0) return (double)screen.maximumFramesPerSecond;
+    }
   }
   SDL_DisplayMode m;
   int di = SDL_GetWindowDisplayIndex(window);
@@ -112,6 +116,95 @@ bool takeRom(const std::wstring& data, const std::string& path) {
 }  // namespace
 
 void openUrl(const char* url) { SDL_OpenURL(url); }
+
+namespace {
+// A slang preset's file: its path (under "shaders") in the data folder, else
+// the same path in the app's Resources (the presets that come with it).
+std::wstring presetFile(const std::wstring& data, const std::wstring& rel) {
+  if (rel.empty() || rel[0] == L'/') return rel;
+  const std::wstring own = pathJoin(data, rel);
+  return fileExists(own) ? own : pathJoin(widenUtf8(resourceDir()), rel);
+}
+}  // namespace
+
+void App::applySlang(bool force) {
+  const std::wstring full = presetFile(exeDir, cfg.slangPreset);
+  if (!force && full == slangLoaded) return;
+  std::string err;
+  if (video.setSlang(full, &err)) {
+    slangLoaded = full;
+    if (!full.empty()) logf("slang preset loaded: %s", narrow(full).c_str());
+  } else {
+    logf("slang preset failed: %s: %s", narrow(full).c_str(), err.c_str());
+    // (librashader's own errors are long: a short reason here, the whole of it in the log)
+    std::string why = err.find("NotFound") != std::string::npos           ? "file not found"
+                      : err.find("librashader.dylib") != std::string::npos ? err
+                                                                           : "it couldn't be compiled (see smas_port.log)";
+    menu.notify("Shader " + narrow(pathName(full)) + " not loaded: " + why, 4.0f);
+    cfg.slangPreset.clear();
+    video.setSlang(L"", nullptr);
+    slangLoaded.clear();
+  }
+}
+
+// The slang presets under the 'shaders' folders of the data folder and of the
+// app's Resources (the ones that come with it), grouped by folder, and Off.
+std::shared_ptr<MenuPage> App::pageSlang() {
+  auto p = std::make_shared<MenuPage>();
+  p->title = "Slang Shader";
+  p->wide = true;
+  p->rebuild = [this](MenuPage& pg) {
+    pg.items.clear();
+    auto pick = [this](std::wstring rel) {
+      cfg.slangPreset = std::move(rel);
+      applySlang();
+      menu.pop();
+    };
+    pg.items.push_back(MenuItem::action("Off (use the built-in filter)", [pick]() { pick(L""); }));
+    if (!video.slangAvailable()) {
+      pg.items.push_back(MenuItem::info("librashader not found",
+                                        "Slang shaders need librashader.dylib in the app's Frameworks folder."));
+      return;
+    }
+    namespace fs = std::filesystem;
+    std::vector<fs::path> found;  // (relative to the folder holding "shaders")
+    std::set<fs::path> seen;
+    for (const fs::path& base : {fs::path(narrowUtf8(exeDir)), fs::path(resourceDir())}) {
+      std::error_code ec;
+      const fs::path root = base / "shaders";
+      if (!fs::is_directory(root, ec)) continue;
+      for (auto it = fs::recursive_directory_iterator(root, fs::directory_options::skip_permission_denied, ec);
+           it != fs::recursive_directory_iterator(); it.increment(ec)) {
+        if (ec) break;
+        if (!it->is_regular_file(ec) || it->path().extension() != ".slangp") continue;
+        fs::path rel = it->path().lexically_relative(base);
+        if (seen.insert(rel).second) found.push_back(rel);
+      }
+    }
+    if (found.empty()) {
+      pg.items.push_back(MenuItem::info(
+          "No presets found", "Put .slangp presets (with their shader files) in a 'shaders' folder in " +
+                                  narrowUtf8(exeDir) + ", e.g. the libretro slang-shaders collection."));
+      return;
+    }
+    std::sort(found.begin(), found.end());
+    fs::path lastDir;
+    for (const fs::path& rel : found) {
+      fs::path dir = rel.parent_path().lexically_relative("shaders");
+      if (dir != lastDir) {
+        pg.items.push_back(MenuItem::header(dir.empty() || dir == "." ? "shaders" : dir.string()));
+        lastDir = dir;
+      }
+      std::wstring relW = widenUtf8(rel.string());
+      MenuItem it = MenuItem::action(rel.stem().string(), [pick, relW]() { pick(relW); },
+                                     "Some presets expect a 4:3 picture: with widescreen they can stretch or frame "
+                                     "oddly.");
+      if (relW == cfg.slangPreset) it.valueText = []() { return std::string("Active"); };
+      pg.items.push_back(it);
+    }
+  };
+  return p;
+}
 
 void App::applyDisplayMode() {
   if (!window) return;
@@ -255,6 +348,7 @@ bool App::init() {
   playing = Launcher::cardGame(cfg.lastGame);
   if (haveRom) romReady();
   applyConfig();
+  applySlang(true);
   inLauncher = true;
   // (--game smb1|smbll|smb2|smb3|allstars: straight into it, as on Windows)
   if (haveRom && !startGame.empty()) {

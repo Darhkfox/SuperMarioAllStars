@@ -1,5 +1,5 @@
 # macOS build: compiles the port on a GitHub macOS runner (SDL2 built from
-# source into the app; Metal video), universal (Apple silicon and Intel) for
+# source into the app, librashader beside it; Metal video), universal (Apple silicon and Intel) for
 # macOS 11 and later, signed ad hoc (no Apple developer account: players open
 # it once through Privacy & Security, see packaging/macos/beta-notes.md) and
 # zipped, uploaded as the run's artifact. No game data is involved.
@@ -23,6 +23,18 @@ jobs:
       - name: SDL2 2.32.10
         run: packaging/macos/fetch_sdl.sh
 
+      # librashader (the slang presets' runtime) from source, universal; kept
+      # between runs, rebuilt when its script changes
+      - uses: actions/cache@v4
+        id: librashader
+        with:
+          path: third_party/librashader/librashader.dylib
+          key: librashader-macos-${{ hashFiles('packaging/macos/build_librashader.sh') }}
+
+      - name: librashader 0.12.0
+        if: steps.librashader.outputs.cache-hit != 'true'
+        run: packaging/macos/build_librashader.sh
+
       - name: Build
         run: |
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
@@ -32,7 +44,7 @@ jobs:
         run: |
           set -x
           app=build/SuperMarioAllStars.app
-          lipo -info "$app/Contents/MacOS/SuperMarioAllStars"
+          lipo -info "$app/Contents/MacOS/SuperMarioAllStars" "$app/Contents/Frameworks/librashader.dylib"
           # (only the system's libraries: SDL is linked in)
           if otool -L "$app/Contents/MacOS/SuperMarioAllStars" | grep $'^\t' | grep -v -e /System/ -e /usr/lib/; then
             echo "::error::the app links a library outside macOS"; exit 1
