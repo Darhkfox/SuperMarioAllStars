@@ -96,3 +96,5 @@ void openUrl(const char* url) {
   std::wstring w(url, url + strlen(url));
   ShellExecuteW(nullptr, L"open", w.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 }
+
+void openFolder(const std::wstring& path) { ShellExecuteW(nullptr, L"open", path.c_str(), nullptr, nullptr, SW_SHOWNORMAL); }

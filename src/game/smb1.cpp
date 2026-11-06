@@ -1049,7 +1049,11 @@ bool Smb1Engine::onExec(uint32_t pc) {
       int rel = (int8_t)ram(0x0079 + x) * 256 + ram(0x021a + x) - cam16_;
       // (its horizontal bits only: one above or below the screen still has
       // none, or a Podoboo far below met the player by its Y's low byte)
-      if (x < 6 && rel > -extL_ - 16 && rel < 256 + extR_) r.a &= 0xfff0;
+      // (All ten of All-Stars' enemy slots, not the NES's first six: a
+      // power-up in slot 9 past the screen's right edge had no box, and in
+      // co-op Luigi held out there couldn't take it, nor be met by an enemy
+      // in slots 6-9.)
+      if (x < 10 && rel > -extL_ - 16 && rel < 256 + extR_) r.a &= 0xfff0;
     }
     return false;
   }

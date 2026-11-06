@@ -26,3 +26,4 @@ bool listFiles(const std::wstring& dir, std::vector<std::wstring>& names);
 std::string timeText(const char* fmt);
 
 void openUrl(const char* url);
+void openFolder(const std::wstring& path);  // in the system's file manager (Android: nothing)

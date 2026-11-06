@@ -83,6 +83,9 @@ struct App {
   bool pickingRom = false;
   void pickRom();   // the system file picker, the file copied into the app (see SmasActivity)
   void pollPick();
+  void pickArt(int card);  // a cover (card 0-4) or the background (-1) chosen with the system picker (Android)
+  void pollArtPick();
+  bool pickingArt = false;
   void touchFrame();  // taps and drags on the launcher and menus, the on-screen pad's buttons
 #endif
   Launcher::Action launcherTap = Launcher::kNone;  // (a card or button tapped or clicked: see frameLauncher)
@@ -113,6 +116,11 @@ struct App {
     // (display.pacing_log: refreshes per pass seen, 0 1 2 3+; the passes' spacing)
     int vbSeen[4] = {}, logPasses = 0, logFrames = 0;
     double dtLo = 1e9, dtHi = 0, logAt = 0;
+    int offBeatCount = 0;           // passes in a row whose wait wasn't a whole number of refreshes
+    bool offBeatLogged = false;
+    double sumReal = 0, sumCounted = 0;  // (this window's time gone by, and its refreshes counted)
+    int nWin = 0;
+    bool clockMode = false;         // game time from the clock: the refreshes counted drifted
     unsigned logPresents = 0, logRefreshes = 0;
   } pacing;
   double fpsTimer = 0;
@@ -196,6 +204,7 @@ struct App {
   std::string blackFramesNote() const;
   void applyDisplayMode();
   void applyConfig();
+  void applyLauncherArt(bool reload = false);  // the covers and background (see Launcher::setArt)
   // The slang shader preset in cfg.slangPreset loaded (or dropped) if it
   // isn't what the video layer has; force after the device was recreated.
 #if defined(_WIN32) || defined(__APPLE__)

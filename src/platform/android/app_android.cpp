@@ -68,6 +68,7 @@ std::vector<std::wstring> romDirs(const std::wstring& data) {
 }  // namespace
 
 void openUrl(const char* url) { SDL_OpenURL(url); }
+void openFolder(const std::wstring&) {}
 
 // (Android has one full-screen window: the aspect and scaling settings apply as it's drawn)
 void App::applyDisplayMode() {}
@@ -113,6 +114,35 @@ void App::pollPick() {
   romPoll = 0;
   pollRom(0);
   if (!snes) menu.notify("That isn't the Super Mario All-Stars ROM - see the game card", 4.0f);
+}
+
+// A cover or the background chosen with the system picker (copied into
+// files/covers by SmasActivity.pickImage), read again once it's there.
+void App::pickArt(int card) {
+  if (pickingArt) return;
+  JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
+  jobject act = (jobject)SDL_AndroidGetActivity();
+  if (!env || !act) return;
+  jclass cls = env->GetObjectClass(act);
+  if (jmethodID m = env->GetStaticMethodID(cls, "pickImage", "(Ljava/lang/String;)V")) {
+    jstring name = env->NewStringUTF(Launcher::artName(card));
+    env->CallStaticVoidMethod(cls, m, name);
+    env->DeleteLocalRef(name);
+    pickingArt = true;
+  }
+  env->ExceptionClear();
+  env->DeleteLocalRef(cls);
+  env->DeleteLocalRef(act);
+}
+
+void App::pollArtPick() {
+  if (!pickingArt) return;
+  jint r = callActivityInt("pollImageResult");
+  if (r == -1) return;
+  pickingArt = false;
+  if (r <= 0) return;
+  applyLauncherArt(true);
+  menu.notify("Picture added", 2.5f);
 }
 
 // Taps and drags: on the launcher's cards and buttons, the menus' rows; the
@@ -275,6 +305,7 @@ void App::run() {
     }
     if (!running) break;
     pollPick();
+    pollArtPick();
     Uint64 now = SDL_GetPerformanceCounter();
     double dt = (double)(now - last) / freq;
     last = now;

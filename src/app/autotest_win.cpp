@@ -180,6 +180,7 @@ void App::atRunSteps() {
       }
     } else if (s.cmd == "set") {
       atSet(a);
+      launcher.setAllStarsOnly(cfg.launcherAllStars);  // (launcher.allstars_only, read at start otherwise)
     } else if (s.cmd == "hfr") {
       at.subs = std::clamp(atoi(a.c_str()), 1, (int)Ppu::kMaxSubFrames);
     } else if (s.cmd == "menu") {

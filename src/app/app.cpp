@@ -222,7 +222,7 @@ void App::frameLauncher(double dt, int gameFrames) {
   if (menuOpen && !menu.open()) cfg.save(configPath);
   if (snes) music.update(dt, menu.open());
   // (the chosen card's sound, not under a menu page: the music player's there)
-  launcher.runPreviews(gameFrames, !menu.open() && !(cfg.muteUnfocused && !focused), audio);
+  launcher.runPreviews(gameFrames, !menu.open() && !(cfg.muteUnfocused && !focused), audio, pacing.hz);
 }
 
 // Black frame insertion's state, beside its switch.
@@ -355,7 +355,13 @@ void App::screenshot() {
 // Display
 
 
+void App::applyLauncherArt(bool reload) {
+  launcher.setCoverFill(cfg.launcherCoverFill);
+  launcher.setArt(pathJoin(exeDir, L"covers"), cfg.launcherCovers, cfg.launcherBackground, reload);
+}
+
 void App::applyConfig() {
+  applyLauncherArt();
   audio.setVolume(cfg.volume / 100.0f);
   audio.setLatency(cfg.audioLatency);
   if (snes) snes->ppu.noSpriteLimit = cfg.noSpriteLimit;
@@ -793,6 +799,53 @@ std::shared_ptr<MenuPage> App::pageOptions() {
         },
         "Super Mario All-Stars: one card, the cartridge's own title and game select. The Four Games: a card "
         "for each, straight to its save files."));
+    // The player's own covers and background (none come with the game).
+#ifdef __ANDROID__
+    const std::string where = "Choose each picture below (PNG or JPG).";
+#else
+    const std::string where = "Put PNG or JPG pictures in the covers folder (Open Covers Folder below): smb1, "
+                              "lostlevels, smb2, smb3 and allstars (the single card), and background.";
+#endif
+    pg.items.push_back(MenuItem::toggle(
+        "Game Covers", [this]() { return cfg.launcherCovers ? 1 : 0; },
+        [this](int v) {
+          cfg.launcherCovers = v != 0;
+          applyLauncherArt();
+        },
+        "The cards show your own cover pictures in place of their live previews; a card without one keeps its "
+        "preview. " + where));
+    pg.items.push_back(MenuItem::choice(
+        "Cover Shape", {"Fill the Frame", "Whole Cover"}, [this]() { return cfg.launcherCoverFill ? 0 : 1; },
+        [this](int v) {
+          cfg.launcherCoverFill = v == 0;
+          applyLauncherArt();
+        },
+        "Fill the Frame: the cover fills its card's square frame, its edges trimmed (a tall box's mostly from the "
+        "bottom). Whole Cover: all of it, with dark bars beside a tall one."));
+    pg.items.push_back(MenuItem::toggle(
+        "Custom Background", [this]() { return cfg.launcherBackground ? 1 : 0; },
+        [this](int v) {
+          cfg.launcherBackground = v != 0;
+          applyLauncherArt();
+        },
+        "The launcher's background is your own picture, filling the screen. " + where));
+#ifdef __ANDROID__
+    static const char* const kArtLabels[] = {"Super Mario Bros.", "The Lost Levels", "Super Mario Bros. 2",
+                                             "Super Mario Bros. 3", "Super Mario All-Stars"};
+    for (int k = 0; k <= Launcher::kCards; k++)
+      pg.items.push_back(MenuItem::action(std::string("Choose Cover: ") + kArtLabels[k], [this, k]() { pickArt(k); },
+                                          "A picture from your phone for this card (turn Game Covers on to see it)."));
+    pg.items.push_back(MenuItem::action("Choose Background", [this]() { pickArt(-1); },
+                                        "A picture from your phone for the launcher (turn Custom Background on)."));
+#else
+    pg.items.push_back(MenuItem::action("Open Covers Folder", [this]() {
+      const std::wstring dir = pathJoin(exeDir, L"covers");
+      makeDir(dir);
+      openFolder(dir);
+      menu.notify("Covers folder opened - pictures are read when you switch Game Covers on", 4.0f);
+    }, "Where your covers and background go. After adding pictures, switch Game Covers (or Custom Background) "
+       "off and on again to read them."));
+#endif
     pg.items.push_back(MenuItem::header("Multiplayer"));
     pg.items.push_back(MenuItem::toggle(
         "Two-Player Co-op", [this]() { return cfg.coop ? 1 : 0; },
@@ -1540,6 +1593,11 @@ void App::frame(double dt, int gameFrames) {
         at.padPos++;
       }
 #endif
+      // (Of the frames a pass runs, only the last is drawn: a device that
+      // falls behind (a Galaxy A12: 30 fps, the sound stuttering) runs two a
+      // pass, and drawing is most of a frame's work. The game keeps its speed
+      // and its sound; the picture changes less often. Fast forward too.)
+      snes->ppu.skipRender = !loading && i < runs - 1;
       game->beforeFrame();
       snes->runFrame();
       game->afterFrame();
@@ -1557,6 +1615,7 @@ void App::frame(double dt, int gameFrames) {
       if (cfg.rewind && !achLocked() && !loading && !game->coopMidTurn() && (++rewindCount & 1) == 0)
         rewind.push(snes->saveState());
     }
+    snes->ppu.skipRender = false;
     achFrame();
   }
   sramTimer += dt;

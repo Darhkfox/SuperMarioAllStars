@@ -116,6 +116,9 @@ bool takeRom(const std::wstring& data, const std::string& path) {
 }  // namespace
 
 void openUrl(const char* url) { SDL_OpenURL(url); }
+void openFolder(const std::wstring& path) {
+  [[NSWorkspace sharedWorkspace] openURL:[NSURL fileURLWithPath:@(narrowUtf8(path).c_str()) isDirectory:YES]];
+}
 
 namespace {
 // A slang preset's file: its path (under "shaders") in the data folder, else
@@ -272,6 +275,11 @@ void App::pollPick() {
   romPoll = 0;
   pollRom(0);
 }
+
+// (The covers and background go in the covers folder: Options > Launcher >
+// Open Covers Folder; no picker here.)
+void App::pickArt(int) {}
+void App::pollArtPick() {}
 
 // Clicks and drags (a mouse acts as one finger; a trackpad too): on the
 // launcher's cards and buttons, the menus' rows.

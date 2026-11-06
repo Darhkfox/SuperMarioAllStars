@@ -61,8 +61,10 @@ add_executable(SuperMarioAllStars WIN32
   src/app/monitors.cpp
   src/app/music.cpp
   src/app/slang.cpp
+  src/app/imageload.cpp
   src/app/app.rc
 )
+target_include_directories(SuperMarioAllStars PRIVATE third_party/stb)
 target_link_libraries(SuperMarioAllStars smascore
   d3d11 dxgi d3dcompiler d2d1 dwrite xaudio2 xinput dinput8 dxguid winmm comdlg32 shell32 ole32 user32 gdi32)
 set_target_properties(SuperMarioAllStars PROPERTIES OUTPUT_NAME "SuperMarioAllStars")
@@ -115,6 +117,7 @@ elseif(APPLE)
     src/app/achstore.cpp
     src/app/utf8.cpp
     src/app/sys_posix.cpp
+    src/app/imageload.cpp
     src/platform/android/audio_sdl.cpp
     src/platform/android/input_sdl.cpp
     src/platform/android/touch.cpp
@@ -131,6 +134,7 @@ elseif(APPLE)
   set_source_files_properties(src/platform/macos/video_metal.mm src/platform/macos/slang_metal.mm
     src/platform/macos/app_macos.mm PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
   target_compile_options(SuperMarioAllStars PRIVATE -O2 -Wno-unused-parameter -Wno-sign-compare)
+  target_include_directories(SuperMarioAllStars PRIVATE third_party/stb)
   # the bundled slang presets, and librashader (loaded at run time when it's
   # there: packaging/macos/build_librashader.sh builds it)
   add_custom_command(TARGET SuperMarioAllStars POST_BUILD
@@ -167,6 +171,7 @@ elseif(UNIX AND NOT ANDROID)
     src/app/achstore.cpp
     src/app/utf8.cpp
     src/app/sys_posix.cpp
+    src/app/imageload.cpp
     src/platform/android/video_gles.cpp
     src/platform/android/audio_sdl.cpp
     src/platform/android/input_sdl.cpp
@@ -174,5 +179,6 @@ elseif(UNIX AND NOT ANDROID)
     src/platform/linux/app_linux.cpp
   )
   target_compile_options(SuperMarioAllStars PRIVATE -O2 -Wno-unused-parameter -Wno-sign-compare)
+  target_include_directories(SuperMarioAllStars PRIVATE third_party/stb)
   target_link_libraries(SuperMarioAllStars smascore SDL2::SDL2 Freetype::Freetype GLESv2 Threads::Threads)
 endif()
