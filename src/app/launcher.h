@@ -56,6 +56,7 @@ public:
   // "background", .png / .jpg / .jpeg). Read again when anything changed, or
   // `reload` (a picture chosen).
   void setArt(const std::wstring& dir, bool covers, bool background, bool reload = false);
+  void setCoverFill(bool fill) { coverFill_ = fill; }  // covers fill their (square) frames, trimmed; else whole
   static const char* artName(int card);  // (smb1, lostlevels, smb2, smb3, allstars)
   bool hasCover(int card) const { return useCovers_ && card >= 0 && card <= kCards && cover_[card].w > 0; }
 
@@ -103,7 +104,7 @@ private:
   };
   Art cover_[kCards + 1], bgArt_;
   std::wstring artDir_;
-  bool useCovers_ = false, useBg_ = false;
+  bool useCovers_ = false, useBg_ = false, coverFill_ = true;
   void readArt(Art& a, const char* name);
   int artImage(Canvas* cv, Art& a);
   void freeArt();

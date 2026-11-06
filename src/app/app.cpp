@@ -356,6 +356,7 @@ void App::screenshot() {
 
 
 void App::applyLauncherArt(bool reload) {
+  launcher.setCoverFill(cfg.launcherCoverFill);
   launcher.setArt(pathJoin(exeDir, L"covers"), cfg.launcherCovers, cfg.launcherBackground, reload);
 }
 
@@ -813,6 +814,14 @@ std::shared_ptr<MenuPage> App::pageOptions() {
         },
         "The cards show your own cover pictures in place of their live previews; a card without one keeps its "
         "preview. " + where));
+    pg.items.push_back(MenuItem::choice(
+        "Cover Shape", {"Fill the Frame", "Whole Cover"}, [this]() { return cfg.launcherCoverFill ? 0 : 1; },
+        [this](int v) {
+          cfg.launcherCoverFill = v == 0;
+          applyLauncherArt();
+        },
+        "Fill the Frame: the cover fills its card's square frame, its edges trimmed (a tall box's mostly from the "
+        "bottom). Whole Cover: all of it, with dark bars beside a tall one."));
     pg.items.push_back(MenuItem::toggle(
         "Custom Background", [this]() { return cfg.launcherBackground ? 1 : 0; },
         [this](int v) {

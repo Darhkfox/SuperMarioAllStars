@@ -516,7 +516,12 @@ void Launcher::draw(Menu& menu, int w, int h) {
   ty0 += lh(fBody);
 
   // Cards
-  const float aspect = (float)(256.0 * par_ / 224.0);
+  // (the cards' picture frames: the game's screen's shape; with covers, square:
+  // upright box art, the frames fill better)
+  const float screenAspect = (float)(256.0 * par_ / 224.0);
+  bool anyCover = false;
+  for (int k : cards_) anyCover = anyCover || hasCover(k);
+  const float aspect = anyCover ? 1.0f : screenAspect;
   const float top = ty0 + H * 0.045f;
   const float gap = W * 0.025f;
   const float rad0 = H * 0.02f;
@@ -559,14 +564,18 @@ void Launcher::draw(Menu& menu, int w, int h) {
     pr.bottom = pr.top + pw / aspect;
     menu.fillRound(pr, rad * 0.5f, argb(0xFF0A0D14));
     if (hasCover(cards_[i]) && haveRom_) {
-      // The player's cover, whole (box art is upright, the area is wide: the
-      // dark backdrop either side), dimmed when the card isn't chosen.
+      // The player's cover, filling its frame (what's beyond it trimmed, a
+      // tall cover's mostly from the bottom: box art's logo is at the top),
+      // or whole (the dark backdrop either side); dimmed when not chosen.
       Art& a = cover_[cards_[i]];
       if (int img = artImage(cv, a)) {
         const float aw = pr.right - pr.left, ah = pr.bottom - pr.top;
-        const float s = std::min(aw / a.w, ah / a.h), dw = a.w * s, dh = a.h * s;
-        const float mx = (pr.left + pr.right) * 0.5f, my = (pr.top + pr.bottom) * 0.5f;
-        cv->drawImage(img, rectF(mx - dw * 0.5f, my - dh * 0.5f, mx + dw * 0.5f, my + dh * 0.5f), 1.0f, true);
+        const float s = coverFill_ ? std::max(aw / a.w, ah / a.h) : std::min(aw / a.w, ah / a.h);
+        const float dw = a.w * s, dh = a.h * s;
+        const float x = pr.left + (aw - dw) * 0.5f, y = pr.top + (ah - dh) * (dh > ah ? 0.25f : 0.5f);
+        cv->pushClip(pr);
+        cv->drawImage(img, rectF(x, y, x + dw, y + dh), 1.0f, true);
+        cv->popClip();
         if (an < 0.99f) fill(pr, colorF(0, 0, 0, 0.35f * (1.0f - an)));
       }
     } else if (pv.snes && pv.ready) {
@@ -586,8 +595,15 @@ void Launcher::draw(Menu& menu, int w, int h) {
         if (pv.fresh) cv->updateImage(pv.image, pv.snes->ppu.frame + kMaxExt, kLineW);
         pv.fresh = false;
         // (whole multiples of the picture stay sharp; in between, smooth)
-        float scale = (pr.bottom - pr.top) / fh;
-        cv->drawImage(pv.image, pr, pv.shown, scale < 2.0f);
+        // (in a square frame beside covers: the picture its own shape, centred)
+        RectF ip = pr;
+        if (aspect != screenAspect) {
+          const float ih = (pr.right - pr.left) / screenAspect, my = (pr.top + pr.bottom) * 0.5f;
+          ip.top = my - ih * 0.5f;
+          ip.bottom = my + ih * 0.5f;
+        }
+        float scale = (ip.bottom - ip.top) / fh;
+        cv->drawImage(pv.image, ip, pv.shown, scale < 2.0f);
         if (an < 0.99f) fill(pr, colorF(0, 0, 0, 0.35f * (1.0f - an)));
       }
     } else if (pv.snes) {
