@@ -1,4 +1,10 @@
 cmake_minimum_required(VERSION 3.20)
+# macOS: a universal app (Apple silicon and Intel) for macOS 11 and later
+# (before project(), so every target gets them).
+if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin" AND NOT CMAKE_TOOLCHAIN_FILE)
+  set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "")
+  set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "")
+endif()
 project(SMASPort LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -72,14 +78,12 @@ add_custom_command(TARGET SuperMarioAllStars POST_BUILD
 elseif(APPLE)
   # macOS: the same SDL sound / controller layer as Android and Linux, with
   # its own entry (src/platform/macos) and Metal video (no OpenGL). Built as
-  # an app bundle; SDL2 from third_party/SDL2-*-src when it's there (as for
-  # Android: static, for a self-contained universal app), else an installed one.
+  # an app bundle; SDL2 from third_party/SDL2-*-src when it's there
+  # (packaging/macos/fetch_sdl.sh: static, for a self-contained universal
+  # app), else an installed one (-DCMAKE_OSX_ARCHITECTURES=arm64 for Homebrew's).
   enable_language(OBJCXX)
   if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
-  endif()
-  if(NOT CMAKE_OSX_DEPLOYMENT_TARGET)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET 11.0)
   endif()
   file(GLOB SDL_SRC_DIR LIST_DIRECTORIES true ${CMAKE_SOURCE_DIR}/third_party/SDL2-*-src)
   if(SDL_SRC_DIR)
