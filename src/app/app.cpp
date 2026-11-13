@@ -1850,8 +1850,10 @@ void App::frame(double dt, int gameFrames) {
       // (Of the frames a pass runs, only the last is drawn: a device that
       // falls behind (a Galaxy A12: 30 fps, the sound stuttering) runs two a
       // pass, and drawing is most of a frame's work. The game keeps its speed
-      // and its sound; the picture changes less often. Fast forward too.)
-      snes->ppu.skipRender = !loading && i < runs - 1;
+      // and its sound; the picture changes less often. Fast forward too. And
+      // a level's load, drawn nothing of (the picture faded to black): it ran
+      // at a tenth of its speed, a second's wait turning into ten.)
+      snes->ppu.skipRender = i < runs - 1;
       game->beforeFrame();
       snes->runFrame();
       game->afterFrame();
@@ -1868,6 +1870,18 @@ void App::frame(double dt, int gameFrames) {
       if (pendingSave >= 0 && !game->coopMidTurn()) saveState(pendingSave);
       if (cfg.rewind && !achLocked() && !loading && !game->coopMidTurn() && (++rewindCount & 1) == 0)
         rewind.push(snes->saveState());
+    }
+    // (The load drew nothing of itself, its picture faded to black: one of
+    // where it got to, or the screen would show what was up before it - the
+    // last game's picture - for a refresh.)
+    if (loading && !game->levelLoading()) {
+      snes->ppu.skipRender = false;
+      game->beforeFrame();
+      snes->runFrame();
+      game->afterFrame();
+      audioBuf.clear();
+      snes->takeAudio(audioBuf);
+      fpsFrames++;
     }
     snes->ppu.skipRender = false;
     achFrame();
