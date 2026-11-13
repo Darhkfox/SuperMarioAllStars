@@ -549,6 +549,13 @@ static void execLine(const std::string& line) {
     GameId ids[] = {GameId::SMB1, GameId::SMB1, GameId::SMBLL, GameId::SMB2, GameId::SMB3};
     std::string err;
     if (!g_game->requestLevel(ids[std::clamp(gm, 1, 4)], w - 1, l - 1, &err, ch)) printf("warp failed: %s\n", err.c_str());
+  } else if (cmd == "title") {
+    // title GAME [startFile]  - what a launcher card does (SmasGame::requestTitle):
+    // the All-Stars menu driven to that game's file panel, or on into its title.
+    int gm = 1, startFile = 0;
+    ss >> gm >> startFile;
+    GameId ids[] = {GameId::SMB1, GameId::SMB1, GameId::SMBLL, GameId::SMB2, GameId::SMB3};
+    if (!g_game->requestTitle(ids[std::clamp(gm, 1, 4)], startFile != 0)) printf("title failed\n");
   } else if (cmd == "coop") {
     int on = 1;
     ss >> on;

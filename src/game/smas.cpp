@@ -838,8 +838,20 @@ void SmasGame::driveLaunch() {
       } else if (cur != target) {
         int diff = (target - cur + 4) % 4;
         if (t < 4) warpInput_ = diff > 2 ? kPadLeft : kPadRight;
-        if (t > 40) next(2);
+        if (t > 40) {
+          // (It hasn't moved. A game's file panel wears the game select's
+          // tilemap, cursor and all, and there is no cursor to move on it:
+          // entered from one (the launcher's card chosen, then Return to
+          // Launcher before a file was picked), the drive pressed at it
+          // forever, the player's own input overridden. Back to the boot.)
+          if (++warp_.stalls > 8) {
+            warp_.stalls = 0;
+            snes_.reset(false);
+          }
+          next(2);
+        }
       } else if (t > 20) {
+        warp_.stalls = 0;
         next(3);
       }
       break;
