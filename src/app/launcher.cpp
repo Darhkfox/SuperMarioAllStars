@@ -1,5 +1,7 @@
 #include "app/launcher.h"
+#include "app/app.h"
 #include "app/imageload.h"
+#include "app/sys.h"
 #include <algorithm>
 #include <chrono>
 #include <cmath>
@@ -11,6 +13,22 @@
 
 namespace {
 const char* kButtonNames[Launcher::kButtons] = {"Options", "Achievements", "Music Player", "Credits", "Quit"};
+
+// A preview's state file: which ROM and version it was made with (a different
+// one of these and it isn't used), then the console's save state. The battery
+// save isn't one of them: the state carries the one it was taken with, and
+// what the card shows - a game's title - is the same whatever it holds.
+constexpr uint32_t kPreviewMagic = 0x56504d53;  // 'SMPV'
+constexpr uint32_t kPreviewFormat = 2;
+struct PreviewHeader {
+  uint32_t magic, format, appVer, romHash, stateSize;
+};
+uint32_t fnv1a(const void* d, size_t n) {
+  uint32_t h = 0x811c9dc5u;
+  const uint8_t* p = (const uint8_t*)d;
+  for (size_t i = 0; i < n; i++) h = (h ^ p[i]) * 0x01000193u;
+  return h;
+}
 
 struct CardInfo {
   GameId game;
@@ -166,12 +184,15 @@ void Launcher::setRom(const std::vector<uint8_t>* rom, const std::string& fileNa
   exact_ = exact;
   rom_ = rom;
   sram_.assign(sram, sram + (rom ? sramSize : 0));
+  romHash_ = rom ? fnv1a(rom->data(), rom->size()) : 0;
   for (Preview& p : prev_) {
     p.game.reset();
     p.snes.reset();
     p.ready = false;
     p.bootFrames = 0;
     p.shown = 0;
+    p.saved = false;
+    p.readyFrames = 0;
   }
 }
 
@@ -189,8 +210,60 @@ void Launcher::startPreview(int i) {
   p.game->setWidescreen(0);
   p.game->hudAnchor = false;
   p.game->achievements().newRun(false);
+  p.bootStart = std::chrono::steady_clock::now();
+  p.saved = cacheDir_.empty();  // (nothing kept: no reason to wait for a picture to save)
+  if (loadPreviewCache(i)) return;  // (the title it reached last time: no boot)
   // (the All-Stars card: the cartridge from power-on, its title and game select)
   if (i != kAllStars) p.game->requestTitle(cardGame(i), true);
+}
+
+std::wstring Launcher::cachePath(int i) const {
+  return pathJoin(cacheDir_, L"preview" + std::to_wstring(i) + L".sst");
+}
+
+// A preview's console as it was left at the end of the last run: the game at
+// its title, loaded from its state rather than driven there again (which is
+// what the cards' "Starting…" waited on). The game layer is told, as after any
+// state load, so it picks up its per-game tracking from the memory.
+bool Launcher::loadPreviewCache(int i) {
+  if (cacheDir_.empty()) return false;
+  std::vector<uint8_t> d;
+  if (!readAll(cachePath(i), d) || d.size() <= sizeof(PreviewHeader)) return false;
+  PreviewHeader h;
+  std::memcpy(&h, d.data(), sizeof h);
+  if (h.magic != kPreviewMagic || h.format != kPreviewFormat ||
+      h.appVer != fnv1a(version_.data(), version_.size()) || h.romHash != romHash_ ||
+      h.stateSize != d.size() - sizeof h)
+    return false;
+  Preview& p = prev_[i];
+  std::vector<uint8_t> st(d.begin() + sizeof h, d.end());
+  if (!p.snes->loadStateRaw(st)) return false;
+  p.game->onStateLoaded();
+  p.ready = true;
+  // (The state was taken with the title up and lit; one from an older version,
+  // or taken mid fade, is run on a little rather than shown black.)
+  for (int k = 0; k < 90 && (p.snes->ppu.brightness() == 0 || p.snes->ppu.forcedBlank()); k++) {
+    p.snes->ppu.skipRender = true;
+    stepPreview(p);
+  }
+  p.snes->ppu.skipRender = false;
+  stepPreview(p);  // (a picture on the card at once, not a blank frame)
+  p.fresh = true;
+  p.saved = true;  // (already in the cache: nothing to write back)
+  logf("preview %d: from cache (%d KB)", i, (int)(d.size() / 1024));
+  return true;
+}
+
+void Launcher::savePreviewCache(int i) {
+  if (cacheDir_.empty()) return;
+  Preview& p = prev_[i];
+  std::vector<uint8_t> st = p.snes->saveState();
+  PreviewHeader h{kPreviewMagic, kPreviewFormat, fnv1a(version_.data(), version_.size()), romHash_,
+                  (uint32_t)st.size()};
+  std::vector<uint8_t> out(sizeof h + st.size());
+  std::memcpy(out.data(), &h, sizeof h);
+  std::memcpy(out.data() + sizeof h, st.data(), st.size());
+  if (!writeAll(cachePath(i), out.data(), out.size())) logf("preview %d: couldn't write its cache", i);
 }
 
 void Launcher::stepPreview(Preview& p) {
@@ -215,16 +288,30 @@ void Launcher::runPreviews(int frames, bool sound, Audio& audio, double refreshH
     Preview& p = prev_[i];
     if (hasCover(i)) continue;  // (its cover instead)
     if (!p.snes && rom_) startPreview(i);
-    if (!p.snes || p.ready) continue;
+    if (!p.snes || (p.ready && p.saved)) continue;
     // (Booting out of sight, nothing drawn: the Steam Deck, at 60 Hz and a
     // slower CPU, took half a minute to bring all the previews up, SMB3's,
     // the last, still "loading" long after the others ran.)
     p.snes->ppu.skipRender = true;
-    while (!p.ready && clock::now() - start < std::chrono::microseconds(6000)) {
+    while ((!p.ready || !p.saved) && clock::now() - start < std::chrono::microseconds(6000)) {
       stepPreview(p);
       p.bootFrames++;
-      p.ready = i == kAllStars ? p.bootFrames > 30
-                               : (!p.game->levelLoading() && p.game->current() == cardGame(i)) || p.bootFrames > 6000;
+      if (!p.ready)
+        p.ready = i == kAllStars ? p.bootFrames > 30
+                                 : (!p.game->levelLoading() && p.game->current() == cardGame(i)) || p.bootFrames > 6000;
+      if (p.ready && !p.saved) {
+        // Kept for the next run, so the card shows its game at once rather
+        // than waiting through this boot again. A frame or two on first: the
+        // game is spotted at its title before the picture fades in, and a
+        // state taken then comes back black.
+        const bool lit = p.snes->ppu.brightness() > 0 && !p.snes->ppu.forcedBlank();
+        if (lit || ++p.readyFrames > 240) {
+          const double ms = std::chrono::duration<double, std::milli>(clock::now() - p.bootStart).count();
+          logf("preview %d: booted, %d frames (%.0f ms)", i, p.bootFrames, ms);
+          savePreviewCache(i);
+          p.saved = true;
+        }
+      }
     }
     p.snes->ppu.skipRender = !p.ready;
   }
@@ -244,7 +331,8 @@ void Launcher::runPreviews(int frames, bool sound, Audio& audio, double refreshH
   int others[kCards + 1], nOthers = 0;
   for (int i : cards_)
     if (i != chosen && prev_[i].snes && prev_[i].ready) others[nOthers++] = i;
-  const int turn = frames > 0 && nOthers > 0 ? others[drawTurn_ % nOthers] : -1;
+  const int turnIdx = nOthers > 0 ? drawTurn_ % nOthers : -1;
+  const int turn = frames > 0 && turnIdx >= 0 ? others[turnIdx] : -1;
   if (frames > 0) drawTurn_++;
   if (chosen >= 0 && prev_[chosen].snes && prev_[chosen].ready) {
     Preview& p = prev_[chosen];
@@ -267,12 +355,17 @@ void Launcher::runPreviews(int frames, bool sound, Audio& audio, double refreshH
     p.owed = std::min(p.owed + frames, 3);  // (fallen further behind: it just runs slower)
   }
   for (int n = 0; n < nOthers; n++) {
-    const int i = others[(drawTurn_ + n) % nOthers];
+    // (The card whose turn it is goes first: the share of a refresh is small,
+    // and reached last it was the one the time ran out on - its picture never
+    // drawn, the card black.)
+    const int i = others[(turnIdx + n) % nOthers];
     Preview& p = prev_[i];
+    bool drew = false;
     while (p.owed > 0 && clock::now() - from < budget) {
-      const bool draw = p.owed == 1 && i == turn;
+      const bool draw = !drew && i == turn;  // (its first frame of the turn, however far behind)
       p.snes->ppu.skipRender = !draw;
       stepPreview(p);
+      drew = drew || draw;
       p.owed--;
       if (draw) p.fresh = true;
     }

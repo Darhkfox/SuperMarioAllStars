@@ -214,9 +214,12 @@ void App::romReady() {
   music.setMsu(msuBase, narrow(msuLoaded), cfg.msuVolume / 100.0f);  // (the Music Player plays the pack too)
   achNewRun(cfg.achievements);
   applyConfig();
-  if (!test.on && test.runSeconds <= 0)
+  if (!test.on && test.runSeconds <= 0) {
+    // (the cards' previews, kept from one run to the next: see Launcher::setCacheDir)
+    launcher.setCacheDir(saveDir);
     launcher.setRom(&romData, narrow(romPath.substr(romPath.find_last_of(L"\\/") + 1)), romExact, snes->sram,
                     sizeof(snes->sram));
+  }
   if (!romExact) logf("ROM is not the USA dump (CRC differs): running it anyway");
 }
 
