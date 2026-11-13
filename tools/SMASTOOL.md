@@ -22,6 +22,7 @@ WRAM is `7E0000-7FFFFF` (also mirrored at `000000-001FFF`).
 | `bench N` | run N frames and print speed |
 | `reset` | soft reset (console Reset button) |
 | `warp G W L` | level select: G = 1 SMB1, 2 Lost Levels, 3 SMB2, 4 SMB3; world / level 1-based (SMB3 level: 1 = map, 2.. = levels then fortresses) |
+| `title G [1]` | what a launcher card does (`SmasGame::requestTitle`): the All-Stars menu driven to game G's file panel, or with `1` on into its title (the launcher's previews) |
 | `cheats HEX` | set the cheat bit mask (bits 0-7 SMB1, 8-15 LL, 16-23 SMB2, 24-31 SMB3) |
 | `palette N` | character colour variant (0 = original) |
 | `ach on` / `ach off` | achievement checks from now (a run that counts); each event prints `ACH unlock|mark|progress <id> <value> f<frame>` |

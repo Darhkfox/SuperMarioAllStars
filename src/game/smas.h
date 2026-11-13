@@ -175,6 +175,7 @@ private:
     int timer = 0;
     int lastIdx = 0;
     int attempts = 0;
+    int stalls = 0;  // (a cursor that won't move: not the game select, see driveLaunch)
     bool carousel = false;
     bool forceReset = false;  // relaunch even though the title is running
     bool sawMenu = false;
