@@ -4,6 +4,7 @@
 // driven through the game select into that game's title (see
 // SmasGame::requestTitle), silent unless its card is chosen.
 #pragma once
+#include <chrono>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -26,6 +27,10 @@ public:
   // `sram`: the battery save, copied into each preview (never written back).
   void setRom(const std::vector<uint8_t>* rom, const std::string& fileName, bool exact, const uint8_t* sram,
               size_t sramSize);
+  // Where the previews' states are kept from one run to the next (empty: not
+  // kept). Each card's game, once booted to its title, is saved; the next run
+  // loads it back instead of booting again (see loadPreviewCache).
+  void setCacheDir(const std::wstring& dir) { cacheDir_ = dir; }
   // Shapes and pictures belong to the canvas: dropped (and made again on a new one).
   void releaseGpu();
   void setVersion(const std::string& v) { version_ = v; }
@@ -73,6 +78,9 @@ private:
     int image = 0, imageH = 0;  // (made on the canvas of imageEpoch_)
     bool fresh = false;         // a new picture drawn since the image was last updated
     int owed = 0;               // (a card not chosen: frames still to run, see runPreviews)
+    bool saved = false;         // (its state is in the cache, or there is none to keep)
+    int readyFrames = 0;        // (frames run since it was ready, waiting for a lit picture to save)
+    std::chrono::steady_clock::time_point bootStart;  // (how long the boot took, for the log)
   };
   int drawTurn_ = 0;  // (whose turn it is of the cards not chosen to draw a picture: see runPreviews)
   Preview prev_[kCards + 1];
@@ -82,6 +90,13 @@ private:
   std::vector<int> cards_ = {0, 1, 2, 3};  // the cards shown
   const std::vector<uint8_t>* rom_ = nullptr;
   std::vector<uint8_t> sram_;
+  // The previews' state files: made with these (a different ROM or version
+  // makes them useless) - see loadPreviewCache.
+  std::wstring cacheDir_;
+  uint32_t romHash_ = 0;
+  std::wstring cachePath(int i) const;
+  bool loadPreviewCache(int i);
+  void savePreviewCache(int i);
   int sel_ = 0, lastCard_ = 0;  // (slots: cards 0..N-1, then the buttons)
   float anim_[kCards + 1 + kButtons] = {};
   int repeatDir_ = 0;
