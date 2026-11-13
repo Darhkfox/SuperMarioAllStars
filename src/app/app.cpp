@@ -1122,6 +1122,24 @@ void App::achAward(const std::string& id) {
   if (const AchievementDef* d = findAchievement(id)) menu.achievement(d->name, d->desc);
   achCheckCollection();
   achStore.save();
+  if (cfg.achCsv) achSaveCsv();
+}
+
+// Where the spreadsheet goes: an "achievements" folder next to the settings
+// (Android: the app's files folder, reachable over USB).
+std::wstring App::achCsvDir() const { return pathJoin(pathDir(shotDir), L"achievements"); }
+
+// Save CSV on: achievements.csv again, now that another one is in it. The
+// badges were written when it was switched on and don't change (they are
+// written again here only if the folder went away, a fresh install's settings
+// copied over, say).
+void App::achSaveCsv() {
+  const std::wstring dir = achCsvDir();
+  std::string err;
+  std::vector<std::wstring> names;
+  const bool haveBadges = listFiles(pathJoin(dir, L"icons"), names) && !names.empty();
+  if (!(haveBadges ? exportAchievementsCsv(dir, achStore, &err) : exportAchievements(dir, achStore, &err)))
+    logf("achievements: %s", err.c_str());
 }
 
 // All-Star (finish all four games) and Completionist (everything else).
@@ -1173,23 +1191,31 @@ std::shared_ptr<MenuPage> App::pageAchievements() {
   p->rebuild = [this](MenuPage& pg) {
     pg.items.clear();
     pg.items.push_back(achievementsSwitch());
-    pg.items.push_back(MenuItem::action("Export to CSV", [this]() {
-      // (Windows / Linux: next to the settings; Android: where screenshots go, reachable over USB)
-      const std::wstring dir = pathJoin(pathDir(shotDir), L"achievements export");
-      std::string err;
-      if (!exportAchievements(dir, achStore, &err)) {
-        menu.notify("Export failed: " + err, 5.0f);
-        return;
-      }
-      logf("achievements exported to %s", narrow(dir).c_str());
+    // Save CSV: a switch, so the spreadsheet follows along as they're earned.
+    pg.items.push_back(MenuItem::toggle(
+        "Save CSV", [this]() { return cfg.achCsv ? 1 : 0; },
+        [this](int v) {
+          cfg.achCsv = v != 0;
+          cfg.save(configPath);
+          if (!v) return;
+          // (written now, badges and all; from here on only the CSV changes)
+          const std::wstring dir = achCsvDir();
+          std::string err;
+          if (!exportAchievements(dir, achStore, &err)) {
+            menu.notify("Couldn't save the CSV: " + err, 5.0f);
+            return;
+          }
+          logf("achievements saved to %s", narrow(dir).c_str());
 #ifdef __ANDROID__
-      menu.notify("Exported to Android/data/com.darhkfox.allstars/files/achievements export", 6.0f);
+          menu.notify("Saving to Android/data/com.darhkfox.allstars/files/achievements", 6.0f);
 #else
-      openFolder(dir);
-      menu.notify("Achievements exported: achievements.csv and icons", 4.0f);
+          menu.notify("Saving achievements.csv as you earn them", 4.0f);
 #endif
-    }, "Writes achievements.csv (ID, title, description, points, trophy, hidden, progress, unlocked and when, "
-       "icons) and an icons folder, earned and locked, for tools such as PlayniteAchievements' spreadsheet import."));
+        },
+        "While on, achievements.csv (ID, title, description, points, trophy, hidden, progress, unlocked and "
+        "when, icons) and an icons folder are written to the achievements folder next to the settings, and the "
+        "CSV is written again each time one is earned, for tools such as PlayniteAchievements' spreadsheet "
+        "import."));
     // the running game's first
     GameId order[4] = {GameId::SMB1, GameId::SMBLL, GameId::SMB2, GameId::SMB3};
     GameId cur = inLauncher || !game ? Launcher::cardGame(launcher.card()) : game->current();

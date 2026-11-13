@@ -278,6 +278,7 @@ bool Config::load(const std::wstring& path) {
   getb("input.rewind", rewind);
   getb("input.fast_forward", fastForward);
   getb("achievements.on", achievements);
+  getb("achievements.csv", achCsv);
   geti("input.p1_pad", padIndex[0], 0, 7);
   geti("input.p2_pad", padIndex[1], 0, 7);
   for (int p = 0; p < 2; p++) {
@@ -367,6 +368,7 @@ bool Config::save(const std::wstring& path) const {
     for (int a = 0; a < kActCount; a++) f << kActionKeys[a] << "=" << encodeBinding(pad[p][a]) << "\n";
   }
   f << "[achievements]\non=" << achievements << "\n";
+  f << "csv=" << achCsv << "\n";
   char buf[32];
   snprintf(buf, sizeof buf, "%llx", (unsigned long long)cheats);
   f << "[cheats]\nflags=" << buf << "\n";

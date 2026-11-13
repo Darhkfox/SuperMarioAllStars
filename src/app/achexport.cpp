@@ -364,48 +364,16 @@ int achievementPoints(const char* id) {
   return kPoints[std::clamp(lookOf(id).tier, 0, 3)];
 }
 
-void drawAchievementIcon(const AchievementDef& d, bool locked, int size, std::vector<uint32_t>& px) {
-  const Look& l = lookOf(d.id);
-  px.assign((size_t)size * size, 0);
-  constexpr int kSub = 4;
-  for (int py = 0; py < size; py++)
-    for (int pxx = 0; pxx < size; pxx++) {
-      float r = 0, g = 0, b = 0;
-      for (int sy = 0; sy < kSub; sy++)
-        for (int sx = 0; sx < kSub; sx++) {
-          const float x = (pxx + (sx + 0.5f) / kSub) / size, y = (py + (sy + 0.5f) / kSub) / size;
-          const Col c = sampleBadge(d, l, x, y);
-          r += c.r, g += c.g, b += c.b;
-        }
-      const float n = kSub * kSub;
-      r /= n, g /= n, b /= n;
-      if (locked) {  // (grey and dimmed, a little cool)
-        const float v = (0.3f * r + 0.59f * g + 0.11f * b) * 0.55f;
-        r = v * 0.95f, g = v, b = v * 1.08f;
-      }
-      px[(size_t)py * size + pxx] = rgb(r, g, b);
-    }
-}
+namespace {
 
-bool exportAchievements(const std::wstring& dir, const AchievementStore& store, std::string* err) {
-  const std::wstring icons = pathJoin(dir, L"icons");
-  makeDir(dir);
-  makeDir(icons);
-  constexpr int kSize = 128;
+// The spreadsheet: a row per achievement, in the columns PlayniteAchievements'
+// import reads (the icon paths point into the icons folder beside it).
+std::string csvText(const AchievementStore& store) {
   static const char* kTrophy[4] = {"bronze", "silver", "gold", "platinum"};
   std::string csv = "\xEF\xBB\xBF";  // (UTF-8, marked: names like "Bowser Flambé")
   csv += "ID,Title,Description,Points,Trophy Type,Hidden,Rarity,Category,Progress,Progress Total,Unlocked,Unlock Time,"
          "Unlocked Icon,Locked Icon\r\n";
-  std::vector<uint32_t> px;
   for (const AchievementDef& d : achievementDefs()) {
-    for (int locked = 0; locked < 2; locked++) {
-      drawAchievementIcon(d, locked != 0, kSize, px);
-      const std::wstring file = pathJoin(icons, widenUtf8(std::string(d.id) + (locked ? "_locked.png" : ".png")));
-      if (!writePng(narrowUtf8(file), px.data(), kSize, kSize, kSize)) {
-        if (err) *err = "couldn't write " + narrowUtf8(file);
-        return false;
-      }
-    }
     const bool have = store.unlocked(d.id);
     std::string when = store.unlockedAt(d.id);
     if (when.size() == 10) when += " 00:00:00";  // (earned before times were kept: the day only)
@@ -442,9 +410,59 @@ bool exportAchievements(const std::wstring& dir, const AchievementStore& store, 
     }
     csv += "\r\n";
   }
+  return csv;
+}
+
+}  // namespace
+
+bool exportAchievementsCsv(const std::wstring& dir, const AchievementStore& store, std::string* err) {
+  makeDir(dir);
+  const std::string csv = csvText(store);
   if (!writeFileSafely(pathJoin(dir, L"achievements.csv"), csv.data(), csv.size())) {
     if (err) *err = "couldn't write achievements.csv";
     return false;
   }
   return true;
+}
+
+void drawAchievementIcon(const AchievementDef& d, bool locked, int size, std::vector<uint32_t>& px) {
+  const Look& l = lookOf(d.id);
+  px.assign((size_t)size * size, 0);
+  constexpr int kSub = 4;
+  for (int py = 0; py < size; py++)
+    for (int pxx = 0; pxx < size; pxx++) {
+      float r = 0, g = 0, b = 0;
+      for (int sy = 0; sy < kSub; sy++)
+        for (int sx = 0; sx < kSub; sx++) {
+          const float x = (pxx + (sx + 0.5f) / kSub) / size, y = (py + (sy + 0.5f) / kSub) / size;
+          const Col c = sampleBadge(d, l, x, y);
+          r += c.r, g += c.g, b += c.b;
+        }
+      const float n = kSub * kSub;
+      r /= n, g /= n, b /= n;
+      if (locked) {  // (grey and dimmed, a little cool)
+        const float v = (0.3f * r + 0.59f * g + 0.11f * b) * 0.55f;
+        r = v * 0.95f, g = v, b = v * 1.08f;
+      }
+      px[(size_t)py * size + pxx] = rgb(r, g, b);
+    }
+}
+
+bool exportAchievements(const std::wstring& dir, const AchievementStore& store, std::string* err) {
+  const std::wstring icons = pathJoin(dir, L"icons");
+  makeDir(dir);
+  makeDir(icons);
+  constexpr int kSize = 128;
+  std::vector<uint32_t> px;
+  for (const AchievementDef& d : achievementDefs()) {
+    for (int locked = 0; locked < 2; locked++) {
+      drawAchievementIcon(d, locked != 0, kSize, px);
+      const std::wstring file = pathJoin(icons, widenUtf8(std::string(d.id) + (locked ? "_locked.png" : ".png")));
+      if (!writePng(narrowUtf8(file), px.data(), kSize, kSize, kSize)) {
+        if (err) *err = "couldn't write " + narrowUtf8(file);
+        return false;
+      }
+    }
+  }
+  return exportAchievementsCsv(dir, store, err);
 }

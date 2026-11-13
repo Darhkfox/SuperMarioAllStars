@@ -116,6 +116,7 @@ struct Config {
   bool fastForward = true;     // hold Fast Forward to run at 4x
   // Achievements count (cheats, level select, fast forward and rewind are off meanwhile)
   bool achievements = true;
+  bool achCsv = false;         // Save CSV: achievements.csv rewritten as each one is earned
   int padIndex[2] = {0, 1};    // which physical pad drives player 1/2
   Binding keys[2][kActCount];
   Binding pad[2][kActCount];
