@@ -15,6 +15,10 @@ struct AchievementDef;
 // Writes dir/achievements.csv and dir/icons/*.png; false, with why, if it couldn't.
 bool exportAchievements(const std::wstring& dir, const AchievementStore& store, std::string* err);
 
+// Only dir/achievements.csv (the icons are already there): what Save CSV writes
+// again each time one is earned.
+bool exportAchievementsCsv(const std::wstring& dir, const AchievementStore& store, std::string* err);
+
 // An achievement's badge, size x size pixels (0x00RRGGBB).
 void drawAchievementIcon(const AchievementDef& d, bool locked, int size, std::vector<uint32_t>& px);
 

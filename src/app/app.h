@@ -261,6 +261,8 @@ struct App {
   void achFrame();                   // after emulation: earned ones pop up and are stored
   void achAward(const std::string& id);
   void achCheckCollection();
+  std::wstring achCsvDir() const;  // the "achievements" folder, next to the settings
+  void achSaveCsv();               // Save CSV on: the spreadsheet, brought up to date
   void setAchievements(bool on);
   MenuItem achievementsSwitch();     // Options, and the top of the Achievements page
   void achWelcome();                 // once, on the first start

@@ -22,7 +22,7 @@
 //   record NAME / stoprec    <dir>\NAME.mkv (60 fps x hfr) + NAME.pcm (32 kHz stereo s16) + NAME.txt
 //   shot NAME                <dir>\NAME.png
 //   mark NAME                <dir>\marks.txt: the pass and an FNV-1a of the console's work RAM
-//   achexport DIR            Achievements > Export to CSV, into <dir>\DIR
+//   achexport DIR            the CSV export (as Save CSV writes it), into <dir>\DIR
 //   quit
 #include <algorithm>
 #include <cmath>
@@ -230,7 +230,7 @@ void App::atRunSteps() {
         fprintf(f, "%s pass %d ram %08x\n", a.c_str(), at.pass, hsh);
         fclose(f);
       }
-    } else if (s.cmd == "achexport") {  // achexport DIR: Achievements > Export to CSV, into <dir>/DIR
+    } else if (s.cmd == "achexport") {  // achexport DIR: the CSV export, into <dir>/DIR
       std::string err;
       if (!exportAchievements(pathJoin(at.dir, widenUtf8(a)), achStore, &err)) logf("autotest: achexport: %s", err.c_str());
     } else if (s.cmd == "quit") {

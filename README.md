@@ -300,11 +300,13 @@ game's player, or kept aside and already on the pole as the flag scene starts), 
 is lost when either player is hurt.
 
 
-**Export to CSV** (top of the Achievements list) writes an `achievements export` folder: `achievements.csv` in
-the columns PlayniteAchievements' spreadsheet import reads (ID, Title, Description, Points, Trophy Type, Hidden,
-Rarity, Category, Progress, Progress Total, Unlocked, Unlock Time, Unlocked Icon, Locked Icon) and `icons/` with
-each achievement's badge, earned and locked, drawn by the port (`src/app/achexport.cpp`: a colour per game, a rim
-per trophy tier, a symbol per achievement). Points follow the tier: bronze 10, silver 25, gold 50, platinum 100.
+**Save CSV** (top of the Achievements list) is a switch. Turned on, it writes an `achievements` folder:
+`achievements.csv` in the columns PlayniteAchievements' spreadsheet import reads (ID, Title, Description, Points,
+Trophy Type, Hidden, Rarity, Category, Progress, Progress Total, Unlocked, Unlock Time, Unlocked Icon, Locked
+Icon) and `icons/` with each achievement's badge, earned and locked, drawn by the port (`src/app/achexport.cpp`:
+a colour per game, a rim per trophy tier, a symbol per achievement). Points follow the tier: bronze 10, silver
+25, gold 50, platinum 100. From then on the CSV is written again every time an achievement is earned, so it
+always matches what has been unlocked. The setting is kept in `smas_port.ini` (`[achievements] csv=1`).
 
 ## Frame pacing
 The games run at 60.1 frames per second. With VSync on, the frame loop waits on the display's
